@@ -6,7 +6,7 @@ except ModuleNotFoundError:
 from .utils import FetchOaDbHandler, get_sync_oa_user_model
 
 
-@shared_task(name="drf_oa_workflow:同步Oa用户")
+@shared_task(name="drf_oa_workflow:同步OA用户")
 def sync_oa_users():
     """
     同步Oa用户

@@ -3,7 +3,7 @@ from importlib import import_module
 from django.conf import settings
 from django.test.signals import setting_changed
 
-SETTING_PREFIX = "OA_WORKFLOW_API"
+SETTING_PREFIX = "DRF_OA_WORKFLOW"
 
 # OA数据库用户表
 OA_DB_USER_TABLE = "ECOLOGY.HRMRESOURCE"
@@ -97,7 +97,7 @@ class APISettings:
     @property
     def user_settings(self):
         if not hasattr(self, '_user_settings'):
-            self._user_settings = getattr(settings, "OA_WORKFLOW_API", {})
+            self._user_settings = getattr(settings, SETTING_PREFIX, {})
         return self._user_settings
 
     def __getattr__(self, attr):

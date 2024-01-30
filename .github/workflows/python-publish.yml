@@ -7,7 +7,7 @@
 # documentation.
 
 
-name: drf-oa-workflow
+name: Build and publish
 on:
   push:
     tags:
@@ -16,8 +16,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build and publish to WCC Python package repository
+      - name: Build and publish to private Python package repository
         uses: JRubics/poetry-publish@v1.17
         with:
           repository_name: "WCC-PYPI"

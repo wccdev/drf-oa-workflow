@@ -16,10 +16,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      uses: JRubics/poetry-publish@v1.17
-      name: Build and publish to WCC Python package repository
-      with:
-        repository_name: "WCC-PYPI"
-        repository_url: "https://pypi.wochacha.cn/"
-        repository_username: ${{ WCC_PYPI_USERNAME }}
-        repository_password: ${{ WCC_PYPI_PASSWORD }}
+      - uses: actions/checkout@v3
+      - name: Build and publish to WCC Python package repository
+        uses: JRubics/poetry-publish@v1.17
+        with:
+          repository_name: "WCC-PYPI"
+          repository_url: "https://pypi.wochacha.cn/"
+          repository_username: ${{ WCC_PYPI_USERNAME }}
+          repository_password: ${{ WCC_PYPI_PASSWORD }}

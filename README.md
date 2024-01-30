@@ -3,7 +3,7 @@
 
 [![pypi](https://img.shields.io/pypi/v/drf-oa-workflow.svg)](https://pypi.wochacha.cn/simple/drf-oa-workflow/)
 [![python](https://img.shields.io/pypi/pyversions/drf-oa-workflow.svg)](https://pypi.wochacha.cn/simple/drf-oa-workflow/)
-[![Build Status](https://github.com/wccdev/drf-oa-workflow/actions/workflows/dev.yml/badge.svg)](https://github.com/wccdev/drf-oa-workflow/actions/workflows/dev.yml)
+[![Build Status](https://github.com/wccdev/drf-oa-workflow/actions/workflows/python-publish.yml/badge.svg)](https://github.com/wccdev/drf-oa-workflow/actions/workflows/python-publish.yml)
 [![codecov](https://codecov.io/gh/wccdev/drf-oa-workflow/branch/main/graphs/badge.svg)](https://codecov.io/github/wccdev/drf-oa-workflow)
 
 
@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 ]
 
 # 由oa提供
-OA_WORKFLOW_API = {
+DRF_OA_WORKFLOW = {
     # oa接口应用id
     "APP_ID": "xxxx",
     # oa接口应用secret
@@ -167,7 +167,7 @@ urlpatterns = [
 ```
 
 ### 5.同步OA账号到当前项目
-- 同步数据前需要在项目设置OA_WORKFLOW_API中配置AO数据库连接以及指定用户表信息
+- 同步数据前需要在项目设置DRF_OA_WORKFLOW中配置OA数据库连接以及指定用户表信息
 #### 5.1 设置保存数据的表
 drf_oa_workflow已经设置了相关表，可执直接执行迁移命令生成
 详情请查看drf_oa_workflow.models.OaUserInfo
@@ -197,7 +197,7 @@ python manage.py migrate drf_oa_workflow
 
 #### 5.2 在admin后台添加drf_oa_workflow中的定时任务
 需要celery以及django-celery-beat
-![img.png](static/img.png)
+![img.png](static/sync_user_task.png)
 
 #### 5.3 项目User获取同步到的oa用户信息
 ```python

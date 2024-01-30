@@ -3,6 +3,7 @@ import json
 import re
 from io import BytesIO
 from itertools import groupby
+from json.decoder import JSONDecodeError as BaseJSONDecodeError
 
 import requests as system_requests
 from Crypto.Cipher import PKCS1_v1_5
@@ -11,7 +12,7 @@ from django.apps import apps as django_apps
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
-from requests.exceptions import JSONDecodeError
+from requests.exceptions import ConnectionError, JSONDecodeError
 from rest_framework.exceptions import APIException
 
 from .db_connections import get_oa_oracle_connection
@@ -276,8 +277,10 @@ class OaApi(FetchOaDbHandler):
         headers = headers or self._request_headers
         try:
             resp: system_requests.Response = rf(url, headers=headers, **kwargs)
-        except requests.exceptions.ConnectionError:
-            raise APIException("网络异常，系统无法连接到OA服务")
+        except ConnectionError as e:
+            raise APIException(f"系统无法连接到OA服务: {e}")
+        except Exception as e:
+            raise APIException(str(e))
 
         if resp.status_code != 200:
             # 错误导致递归的问题
@@ -292,7 +295,7 @@ class OaApi(FetchOaDbHandler):
 
         try:
             res = resp.json()
-        except JSONDecodeError:
+        except (JSONDecodeError, BaseJSONDecodeError):
             raise ValueError(f"OA返回异常: {resp.text}")
             res = {"code": -1}
 

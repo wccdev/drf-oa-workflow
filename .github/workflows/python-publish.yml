@@ -21,5 +21,5 @@ jobs:
         with:
           repository_name: "WCC-PYPI"
           repository_url: "https://pypi.wochacha.cn/"
-          repository_username: ${{ WCC_PYPI_USERNAME }}
-          repository_password: ${{ WCC_PYPI_PASSWORD }}
+          repository_username: "${{ WCC_PYPI_USERNAME }}"
+          repository_password: "${{ WCC_PYPI_PASSWORD }}"

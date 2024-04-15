@@ -1,6 +1,7 @@
 import base64
 import json
 import re
+import time
 from io import BytesIO
 from itertools import groupby
 from json.decoder import JSONDecodeError as BaseJSONDecodeError
@@ -801,3 +802,68 @@ class OaWorkFlow(OaApi):
         resp = self._post_oa(api_path, post_data=post_data)
         _ = {"code": "SUCCESS", "errMsg": {}}  # noqa
         return resp
+
+    def withdraw(self, request_id, remind="0", remark: str = ""):
+        """
+        流程撤回
+        :param request_id:
+        :param remind: 是否提醒 0：不提醒 1：提醒
+        :param remark: 备注
+        :return:
+        """
+        api_path = "/api/workflow/paService/withdrawRequest"
+        post_data = {
+            "isremind": remind,  # 是否提醒 0：不提醒 1：提醒
+            "remark": remark,
+            "requestId": request_id,
+        }
+        res = self._post_oa(api_path, post_data=post_data)
+        return res
+
+    def delete(self, request_id):
+        """
+        删除流程
+          -- OA功能实践，退回到创建节点可删除流程
+          -- 注意，需要OA在后台流程配置开启对应功能
+          -- 后端应用中心 > 流程引擎 > 路径管理 > 路径设置 > ${找到相关流程} > 基础设置 > 功能设置 > 退回到创建节点可删除流程 开启
+        :param request_id:
+        :return:
+        """
+        api_path = "/api/workflow/paService/deleteRequest"
+        post_data = {"requestId": request_id}
+        res = self._post_oa(api_path, post_data=post_data)
+        return res
+
+    def get_operate_buttons(self, request_id):
+        """
+        获取用户在当前流程的操作按钮
+        :return:
+        """
+        # 1.获取OA loadForm 参数
+        load_form_api = "/api/workflow/reqform/loadForm"
+        timestamp = f"{int(time.time() * 1000)}"
+        load_form_body = {
+            "preloadkey": timestamp,
+            "requestid": request_id,
+            "timestamp": timestamp,
+        }
+        load_form_data = self._post_oa(load_form_api, post_data=load_form_body)
+        if not load_form_data.get("params", {}).get("verifyRight", False):
+            raise APIException("对不起，您没有该流程的相关权限！")
+
+        # 2.获取OA流程的菜单按钮
+        secret_data = {
+            "signatureSecretKey": load_form_data["params"]["signatureSecretKey"],
+            "signatureAttributesStr": load_form_data["params"]["signatureAttributesStr"],
+            "requestType": load_form_data["params"]["requestType"],
+        }
+        right_menu_api = "/api/workflow/reqform/rightMenu"
+        right_menu_body = {
+            "requestid": request_id,
+            **secret_data,
+        }
+        right_menu_data = self._post_oa(right_menu_api, post_data=right_menu_body)
+        if right_menu_data.get("verifyFailMsg"):
+            raise APIException(right_menu_data["verifyFailMsg"])
+
+        return right_menu_data

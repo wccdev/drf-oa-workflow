@@ -48,6 +48,8 @@ DEFAULTS = {
     "OA_SSO_TOKEN_APP_ID": "",
     # requests包
     "REQUESTS_LIBRARY": "requests",
+    # DEBUG
+    "DEBUG": False,
 }
 
 

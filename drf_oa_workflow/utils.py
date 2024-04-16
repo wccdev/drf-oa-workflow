@@ -325,7 +325,10 @@ class OaApi(FetchOaDbHandler):
                 return self.__request(api_path, rf, headers=headers, need_json=need_json, **kwargs)
             raise ValueError(f"Error: {resp.text}")
         if type(res) is dict and res.get("code", "") and res["code"] != "SUCCESS":
-            raise APIException(detail=f"OA提示: {res['code']}, {res.get('errMsg', '')}")
+            error_msg = f"OA提示: {res['code']}, {res.get('errMsg', '')};"
+            if api_settings.DEBUG:
+                error_msg = f"{error_msg}\n{json.dumps(res)}"
+            raise APIException(detail=error_msg)
         return res
 
     def _get_oa(self, api: str, params: dict = None, headers: dict = None, need_json=True):

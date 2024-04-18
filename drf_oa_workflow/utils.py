@@ -16,8 +16,8 @@ from django.core.exceptions import ImproperlyConfigured
 from requests.exceptions import ConnectionError, JSONDecodeError
 from rest_framework.exceptions import APIException
 
-from .db_connections import get_oa_oracle_connection
-from .settings import DEFAULT_SYNC_OA_USER_MODEL, SETTING_PREFIX, api_settings
+from drf_oa_workflow.models import HRMResource
+from drf_oa_workflow.settings import DEFAULT_SYNC_OA_USER_MODEL, SETTING_PREFIX, api_settings
 
 requests: system_requests = api_settings.REQUESTS_LIBRARY
 
@@ -34,97 +34,7 @@ def get_sync_oa_user_model():
         )
 
 
-class FetchOaDbHandler:
-    @classmethod
-    def pre_checking(cls):
-        if not all(
-            [
-                api_settings.OA_DB_USER,
-                api_settings.OA_DB_PASSWORD,
-                api_settings.OA_DB_HOST,
-                api_settings.OA_DB_PORT,
-                api_settings.OA_DB_SERVER_NAME,
-            ]
-        ):
-            raise APIException("未有OA数据库连接配置")
-
-    @classmethod
-    def get_oa_user_id_by_work_code(cls, job_code: str) -> tuple:
-        """
-        通过长工号获取对应的OA用户id
-        :param job_code: 长工号， A0009527...
-        :return: OA用户ID, OA用户部门ID
-        """
-        cls.pre_checking()
-        sql = f"""
-            SELECT {api_settings.OA_DB_USER_FETCH_COLUMNS}
-            FROM {api_settings.OA_DB_USER_TABLE}
-            WHERE {api_settings.OA_DB_USER_STAFF_CODE_COLUMN} = '{job_code}'
-            """
-        with get_oa_oracle_connection().cursor() as cursor:
-            cursor.execute(sql)
-            res = cursor.fetchone()
-        if not res:
-            return None, None
-        return res[0], res[1]
-
-    @classmethod
-    def get_oa_users_id_by_work_code(cls, job_codes: list) -> list:
-        """
-        批量通过长工号获取对应的OA用户id
-        :param job_codes: 长工号， ["A0009527", "A0009528", ...]
-        :return: [[OA用户ID, OA用户部门ID], ...] -> [[18781, 23], [18782, 23], ...]
-        """
-        cls.pre_checking()
-        job_codes = [f"'{i}'" for i in job_codes]
-        conditions = f"({','.join(job_codes)})"
-        sql = f"""
-            SELECT {api_settings.OA_DB_USER_FETCH_COLUMNS}
-            FROM {api_settings.OA_DB_USER_TABLE}
-            WHERE {api_settings.OA_DB_USER_STAFF_CODE_COLUMN} IN {conditions}
-            """
-        with get_oa_oracle_connection().cursor() as cursor:
-            cursor.execute(sql)
-            res = cursor.fetchall()
-        return list(res)
-
-    @classmethod
-    def get_all_oa_users(cls, fields=None, capital=True) -> list:
-        """
-        获取全部OA用户信息
-        :param fields: 查询字段
-        :param capital: 字段名大写
-        :return:
-        """
-        cls.pre_checking()
-        user_table_alias = "U"
-        dept_table_alias = "D"
-        default_fields = (
-            f"{user_table_alias}.{api_settings.OA_DB_USER_ID_COLUMN},"
-            f"{user_table_alias}.{api_settings.OA_DB_USER_STAFF_CODE_COLUMN},"
-            f"{user_table_alias}.{api_settings.OA_DB_USER_DEPT_ID_COLUMN},"
-            f"{user_table_alias}.{api_settings.OA_DB_USER_NAME_COLUMN},"
-            f"{dept_table_alias}.{api_settings.OA_DB_DEPT_NAME_COLUMN}"
-        )
-        fetch_fields = fields or default_fields
-        sql = f"""
-        SELECT {fetch_fields}
-        FROM
-            {api_settings.OA_DB_USER_TABLE} {user_table_alias}
-        LEFT JOIN {api_settings.OA_DB_USER_DEPT_TABLE} {dept_table_alias}
-        ON {user_table_alias}.{api_settings.OA_DB_USER_DEPT_ID_COLUMN} = {dept_table_alias}.{api_settings.OA_DB_DEPT_ID_COLUMN}
-        WHERE
-            {user_table_alias}.{api_settings.OA_DB_USER_STAFF_CODE_COLUMN} IS NOT NULL
-        """  # noqa
-        with get_oa_oracle_connection().cursor() as cursor:
-            cursor.execute(sql)
-            columns = [col[0].upper() if capital else col[0].lower() for col in cursor.description]
-            cursor.rowfactory = lambda *values: dict(zip(columns, values))
-            res = cursor.fetchall()
-        return list(res)
-
-
-class OaApi(FetchOaDbHandler):
+class OaApi:
     TOKEN_KEY = "token"
     CACHE_TOKEN_KEY = "oa-api-token"
     REQUEST_CONTENTTYPE = "application/x-www-form-urlencoded; charset=utf-8"
@@ -216,10 +126,11 @@ class OaApi(FetchOaDbHandler):
         使用工号
         :param job_code: 长工号， A0009527...
         """
-        oa_user_id, oa_user_dept_id = self.get_oa_user_id_by_work_code(job_code)
-        if not oa_user_id:
+        oa_user = HRMResource.objects.filter(LOGINID=job_code).first()
+        if not oa_user:
             raise APIException(f"Oa中未查询到工号为'{job_code}'的账号")
-        self.register_user(oa_user_id)
+
+        self.register_user(oa_user.ID)
 
     def __encrypt_with_spk(self, text: str):
         """

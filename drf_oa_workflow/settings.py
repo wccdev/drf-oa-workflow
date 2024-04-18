@@ -5,45 +5,19 @@ from django.test.signals import setting_changed
 
 SETTING_PREFIX = "DRF_OA_WORKFLOW"
 
-# OA数据库用户表
-OA_DB_USER_TABLE = "ECOLOGY.HRMRESOURCE"
-# OA数据库用户表ID字段
-OA_DB_USER_ID_COLUMN = "ID"
-# OA数据库用户表工号字段
-OA_DB_USER_STAFF_CODE_COLUMN = "LOGINID"
-# OA数据库用户表部门ID字段
-OA_DB_USER_DEPT_ID_COLUMN = "DEPARTMENTID"
-
-# 用户部门表信息
-OA_DB_USER_DEPT_TABLE = "ECOLOGY.HRMDEPARTMENT"
-OA_DB_DEPT_ID_COLUMN = "ID"
-OA_DB_DEPT_NAME_COLUMN = "DEPARTMENTNAME"
+# Django项目OA数据库连接别名
+OA_DATABASE_ALIAS = "oa"
 
 DEFAULT_SYNC_OA_USER_MODEL = "drf_oa_workflow.OaUserInfo"
 
 DEFAULTS = {
+    # Django settings中OA数据库连接的别名
+    "OA_DATABASE_ALIAS": OA_DATABASE_ALIAS,
     # OA开放接口
     "APP_ID": "",
     "APP_RAW_SECRET": "",
     "APP_SPK": "",
     "OA_HOST": "",
-    # OA数据库，可选
-    "OA_DB_USER": "",
-    "OA_DB_PASSWORD": "",
-    "OA_DB_HOST": "",
-    "OA_DB_PORT": 0,
-    "OA_DB_SERVER_NAME": "",
-    # OA数据库用户表信息
-    "OA_DB_USER_TABLE": OA_DB_USER_TABLE,
-    "OA_DB_USER_ID_COLUMN": OA_DB_USER_ID_COLUMN,
-    "OA_DB_USER_NAME_COLUMN": "LASTNAME",
-    "OA_DB_USER_STAFF_CODE_COLUMN": OA_DB_USER_STAFF_CODE_COLUMN,
-    "OA_DB_USER_DEPT_ID_COLUMN": OA_DB_USER_DEPT_ID_COLUMN,
-    "OA_DB_USER_FETCH_COLUMNS": f"{OA_DB_USER_ID_COLUMN}, {OA_DB_USER_DEPT_ID_COLUMN}",
-    # OA数据库用户部门信息
-    "OA_DB_USER_DEPT_TABLE": OA_DB_USER_DEPT_TABLE,
-    "OA_DB_DEPT_ID_COLUMN": OA_DB_DEPT_ID_COLUMN,
-    "OA_DB_DEPT_NAME_COLUMN": OA_DB_DEPT_NAME_COLUMN,
     # OA继承统一认证配置
     "OA_SSO_TOKEN_APP_ID": "",
     # requests包

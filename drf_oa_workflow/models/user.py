@@ -1,8 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from drf_oa_workflow.settings import api_settings
-
 UserModel = get_user_model()
 
 
@@ -37,13 +35,3 @@ class OaUserInfo(AbstractOaUserInfo):
 
     class Meta(AbstractOaUserInfo.Meta):
         swappable = "SYNC_OA_USER_MODEL"
-
-    @classmethod
-    def as_obj(cls, data: dict):
-        return cls(
-            user_id=data[api_settings.OA_DB_USER_ID_COLUMN],
-            staff_code_id=data[api_settings.OA_DB_USER_STAFF_CODE_COLUMN],
-            dept_id=data[api_settings.OA_DB_USER_DEPT_ID_COLUMN],
-            name=data[api_settings.OA_DB_USER_NAME_COLUMN] or "",
-            dept_name=data[api_settings.OA_DB_DEPT_NAME_COLUMN] or "",
-        )

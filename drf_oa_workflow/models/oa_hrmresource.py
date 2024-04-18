@@ -26,6 +26,7 @@ class HRMResource(OADbBaseModel):
     """
 
     ID = models.IntegerField(primary_key=True)
+    LOGINID = models.CharField(max_length=300, unique=True, verbose_name="登入名")
     LASTNAME = models.CharField(max_length=200, verbose_name="姓名")
     DEPARTMENTID = models.ForeignKey(
         HRMDepartment,

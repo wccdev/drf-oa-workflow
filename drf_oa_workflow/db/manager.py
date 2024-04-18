@@ -1,16 +1,17 @@
 from django.db import models
 from django.db.models import Case, F, Q, Value, When
 
-from .function import ConvertOADbDatetime
+from drf_oa_workflow.db.function import ConvertOADbDatetime
+from drf_oa_workflow.settings import api_settings
 
 
 class BaseOADbManager(models.Manager):
     def __init__(self):
         super().__init__()
-        self._db = "oa"
+        self._db = api_settings.OA_DATABASE_ALIAS
 
     def using(self, *args, **kwargs):
-        return super().using("oa")
+        return super().using(api_settings.OA_DATABASE_ALIAS)
 
 
 class CurrentOperatorManager(BaseOADbManager):

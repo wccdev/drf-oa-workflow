@@ -3,7 +3,7 @@ try:
 except ModuleNotFoundError:
     shared_task = lambda name: type(name)  # noqa
 
-from .utils import FetchOaDbHandler, get_sync_oa_user_model
+from drf_oa_workflow.models import HRMResource, OaUserInfo
 
 
 @shared_task(name="drf_oa_workflow:同步OA用户")
@@ -11,12 +11,19 @@ def sync_oa_users():
     """
     同步Oa用户
     """
-    oa_user_model = get_sync_oa_user_model()
-    all_oa_users = FetchOaDbHandler.get_all_oa_users()
+    all_oa_users = HRMResource.objects.select_related("DEPARTMENTID").all()
     objs = []
     for i in all_oa_users:
-        objs.append(oa_user_model.as_obj(i))
-    oa_user_model.objects.bulk_create(
+        objs.append(
+            OaUserInfo(
+                user_id=i.ID,
+                name=i.LASTNAME,
+                staff_code_id=i.LOGINID,
+                dept_id=i.DEPARTMENTID_id,
+                dept_name=i.DEPARTMENTID.DEPARTMENTNAME if i.DEPARTMENTID else "",
+            )
+        )
+    OaUserInfo.objects.bulk_create(
         objs,
         update_conflicts=True,
         update_fields=["staff_code_id", "dept_id", "name", "dept_name"],

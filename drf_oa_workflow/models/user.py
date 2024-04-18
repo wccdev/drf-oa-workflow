@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from .settings import api_settings
+from drf_oa_workflow.settings import api_settings
 
 UserModel = get_user_model()
 

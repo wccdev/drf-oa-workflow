@@ -67,3 +67,20 @@ class OAWFCOIsRemarks(IntegerChoices):
     CC_WITHOUT_SUB = 8, "抄送(不需提交)"
     CC_WITH_SUB = 9, "抄送(需提交)"
     CIRCULATION = 11, "传阅"
+
+
+class OAWFRejectType(IntegerChoices):
+    BY_LINK = 0, "按出口退回"
+    FREE = 1, "自由退回"
+    APPOINT = 2, "在自定范围内退回"
+
+
+class OAWFHandleReSubmit(TextChoices):
+    BY_STEP = "0", "逐级审批"
+    BY_DIRECT = "1", "直达本节点"
+    BY_CHOICE = "2", "操作者选择"
+
+
+class OAWFHandleReSubmitDefault(TextChoices):
+    BY_STEP = "0", "逐级审批"
+    BY_DIRECT = "1", "直达本节点"

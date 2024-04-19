@@ -557,16 +557,28 @@ class OaWorkFlow(OaApi):
         }
         return resp
 
-    def reject(self, request_id: str, node_id: str = "", remark=""):
+    def reject(self, request_id: str, node_id: str = "", handle_submit: int = None, remark=""):
         """
         退回流程
+        :param request_id:
+        :param node_id: 自定退回的节点
+        :param handle_submit: 退回后对重新提交的处理方式 0.退回直达本节点 1.逐级审批
+        :param remark: 退回备注
         """
         api_path = "/api/workflow/paService/rejectRequest"
-        other_params = "{}"
-        if node_id:
-            other_params = json.dumps({"RejectToType": 0, "RejectToNodeid": int(node_id)})
 
-        post_data = {"otherParams": other_params, "remark": remark, "requestId": request_id}
+        # 默认按节点出口退回
+        other_params = {}
+        # 指定节点退回
+        if node_id:
+            other_params["RejectToType"] = 0
+            other_params["RejectToNodeid"] = int(node_id)
+
+        # 重新提交后处理方式
+        if handle_submit is not None:
+            other_params["isSubmitDirect"] = handle_submit
+
+        post_data = {"otherParams": json.dumps(other_params), "remark": remark, "requestId": request_id}
         resp = self._post_oa(api_path, post_data=post_data)
 
         # ERROR DEEMO

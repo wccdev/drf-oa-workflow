@@ -42,6 +42,9 @@ INSTALLED_APPS = [
 
 # 由oa提供
 DRF_OA_WORKFLOW = {
+    # 项目OA需要的链接的数据别名
+    "OA_DATABASE_ALIAS": "oa",
+
     # oa接口应用id
     "APP_ID": "xxxx",
     # oa接口应用secret
@@ -52,18 +55,6 @@ DRF_OA_WORKFLOW = {
     "OA_HOST": "https://oa.demo.com",
 
     # -----以下可选----- #
-    # OA数据库连接信息
-    "OA_DB_USER": "",
-    "OA_DB_PASSWORD": "",
-    "OA_DB_HOST": "",
-    "OA_DB_PORT": 0,
-    "OA_DB_SERVER_NAME": "",
-    # OA数据库用户表信息（此处为默认值）
-    "OA_DB_USER_TABLE": "ECOLOGY.HRMRESOURC",
-    "OA_DB_USER_ID_COLUMN": "ID",
-    "OA_DB_USER_STAFF_CODE_COLUMN": "LOGINID",
-    "OA_DB_USER_DEPT_ID_COLUMN": "DEPARTMENTID",
-    "OA_DB_USER_FETCH_COLUMNS": "ID, DEPARTMENTID",
     # requests包 Requests HTTP Library, 可使用自定义封装请求日志的requests代替
     "REQUESTS_LIBRARY": "requests",
 }
@@ -128,9 +119,9 @@ class YourViewSet(APIView):
     def test(self, request, *args, **kwargs):
         workflow = request.oa_wf_api
         # 待办流程
-        workflow.get_todo_list(page=1, page_size=10)
+        workflow.get_todo_list(workflow_id=12345, page=1, page_size=10)
         # 已办流程
-        workflow.get_handled_list(page=1, page_size=10)
+        workflow.get_handled_list(workflow_id=12345, page=1, page_size=10)
         # 可创建流程
         workflow.get_create_list()
         # ...
@@ -148,9 +139,9 @@ oa_user_id = "TODO"  # TODO
 workflow.register_user(oa_user_id)
 
 # 待办流程
-workflow.get_todo_list(page=1, page_size=10)
+workflow.get_todo_list(workflow_id=12345, page=1, page_size=10)
 # 已办流程
-workflow.get_handled_list(page=1, page_size=10)
+workflow.get_handled_list(workflow_id=12345, page=1, page_size=10)
 # 可创建流程
 workflow.get_create_list()
 # ...

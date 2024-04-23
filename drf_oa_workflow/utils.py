@@ -160,7 +160,7 @@ class OaApi:
         # resp.text {
         # "msg":"获取成功!","code":0,"msgShowType":"none","status":true,"token":"e3d7e45b-805c-43c3-9c0c-e452135ae1ea"
         # }
-        print("新Token: ", res[self.TOKEN_KEY])
+        print("新OA Token: ", res[self.TOKEN_KEY])
         self.token = res[self.TOKEN_KEY]
         cache.set(self.CACHE_TOKEN_KEY, self.token, timeout=None)
         return self.token
@@ -238,7 +238,7 @@ class OaApi:
         if type(res) is dict and res.get("code", "") and res["code"] != "SUCCESS":
             error_msg = f"OA提示: {res['code']}, {res.get('errMsg', '')};"
             if api_settings.DEBUG:
-                error_msg = f"{error_msg}\n{json.dumps(res)}"
+                error_msg = f"{error_msg}\n{json.dumps(res, ensure_ascii=False)}"
             raise APIException(detail=error_msg)
         return res
 
@@ -792,4 +792,5 @@ class OaWorkFlow(OaApi):
         if right_menu_data.get("verifyFailMsg"):
             raise APIException(right_menu_data["verifyFailMsg"])
 
+        # 示例数据 api_example_data.WF_BUTTONS
         return right_menu_data

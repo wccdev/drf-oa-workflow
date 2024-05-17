@@ -84,3 +84,10 @@ class OAWFHandleReSubmit(TextChoices):
 class OAWFHandleReSubmitDefault(TextChoices):
     BY_STEP = "0", "逐级审批"
     BY_DIRECT = "1", "直达本节点"
+
+
+class OAFlowNodeType(TextChoices):
+    CREATE = "0", "创建"
+    REVIEW = "1", "审批"
+    SUBMIT = "2", "提交"
+    ARCHIVE = "3", "归档"

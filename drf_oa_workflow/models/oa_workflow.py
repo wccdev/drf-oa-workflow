@@ -3,6 +3,7 @@ import datetime
 from django.db import models
 
 from drf_oa_workflow.choices import (
+    OAFlowNodeType,
     OAWFCOIsRemarks,
     OAWFCOViewType,
     OAWFHandleReSubmit,
@@ -186,6 +187,9 @@ class WorkflowFlowNode(OADbBaseModel):
     )
     ISSUBMITDIRECTNODEDEFT = models.CharField(
         max_length=10, null=True, blank=True, choices=OAWFHandleReSubmitDefault.choices, verbose_name="默认退回后再提交到达节点处理方式"
+    )
+    NODETYPE = models.CharField(
+        max_length=10, null=True, blank=True, choices=OAFlowNodeType.choices, verbose_name="节点类型"
     )
 
     class Meta:

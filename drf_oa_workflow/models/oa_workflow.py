@@ -95,6 +95,20 @@ class WorkflowCurrentOperator(OADbBaseModel):
         self.save()
 
 
+class WorkflowType(OADbBaseModel):
+    ID = models.IntegerField(primary_key=True)
+    TYPENAME = models.CharField(verbose_name="目录", max_length=1000)
+    TYPEDESC = models.CharField(verbose_name="描述", null=True, blank=True, max_length=1000)
+    ICONKEY = models.CharField(verbose_name="ICONKEY", null=True, blank=True, max_length=1000)
+    DSPORDER = models.IntegerField(verbose_name="顺序", null=True, blank=True)
+    UUID = models.CharField(verbose_name="UUID", max_length=50)
+
+    class Meta:
+        managed = False
+        db_table = 'ECOLOGY"."WORKFLOW_TYPE'
+        verbose_name = verbose_name_plural = "OA流程目录信息"
+
+
 class WorkflowBase(OADbBaseModel):
     """
     流程基本信息
@@ -103,7 +117,16 @@ class WorkflowBase(OADbBaseModel):
     ID = models.IntegerField(primary_key=True)
     WORKFLOWNAME = models.CharField(max_length=300, blank=True, null=True, verbose_name="流程名称")
     FORMID = models.IntegerField(verbose_name="表单ID")
-    WORKFLOWTYPE = models.IntegerField(verbose_name="所属路径ID")
+    # WORKFLOWTYPE = models.IntegerField(verbose_name="所属路径ID")
+    WORKFLOWTYPE = models.ForeignKey(
+        WorkflowType,
+        db_column="WORKFLOWTYPE",
+        to_field="ID",
+        null=True,
+        on_delete=models.DO_NOTHING,
+        related_name="+",
+        verbose_name="流程目录ID",
+    )
     ISVALID = models.IntegerField(verbose_name="生效信息")  # 0：无效 1：有效 2:测试 3:历史版本
     VERSION = models.IntegerField(verbose_name="版本", null=True)
     ISTEMPLATE = models.CharField(verbose_name="是否为流程模板", max_length=10, null=True)  # 0：否 1：是
@@ -124,7 +147,7 @@ class WorkflowBase(OADbBaseModel):
         return {
             "work_flow_id": self.ID,
             "name": self.WORKFLOWNAME,
-            "work_flow_type_id": self.WORKFLOWTYPE,
+            "work_flow_type_id": self.WORKFLOWTYPE_id,
             "work_flow_form_id": self.FORMID,
             "is_active_version": self.ISVALID,
             "parent_id": self.TEMPLATEID if self.VERSION else None,

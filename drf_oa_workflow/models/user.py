@@ -3,6 +3,11 @@ from django.db import models
 
 UserModel = get_user_model()
 
+__all__ = [
+    "AbstractOaUserInfo",
+    "OaUserInfo",
+]
+
 
 class AbstractOaUserInfo(models.Model):
     user_id = models.IntegerField(

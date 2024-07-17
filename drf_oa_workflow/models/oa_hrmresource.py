@@ -2,6 +2,8 @@ from django.db import models
 
 from drf_oa_workflow.db.models import OADbBaseModel
 
+__all__ = ["HRMDepartment", "HRMResource"]
+
 
 class HRMDepartment(OADbBaseModel):
     """

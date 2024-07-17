@@ -38,6 +38,16 @@ repos:
         args: ["--config=setup.cfg"]
         additional_dependencies: [flake8-isort]
 
+  # Run the Ruff linter.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.8
+    hooks:
+      # Linter
+      - id: ruff
+        args: [ --fix, --exit-non-zero-on-fix ]
+      # Formatter
+      - id: ruff-format
+
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:
   autoupdate_schedule: weekly

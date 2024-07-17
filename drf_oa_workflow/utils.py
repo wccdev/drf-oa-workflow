@@ -101,7 +101,7 @@ class OaApi:
         # RIGHT DCA2CD1A9AFA13A8CEA5C82A5CDE8D7ADABA81522626723EC559D733649FABDC
         # ERROR Token获取失败: 认证应用未注册
         if "失败" in token:
-            raise APIException(token)
+            raise APIException(f"[OA]{token}")
         return token
 
     @property
@@ -216,7 +216,7 @@ class OaApi:
         # {'msg':'token不存在或者超时：4225b79b-9407-47ca-82ab-d66850c4ec3e','code':-1,'msgShowType':'none','status':False}
         # {'msg': '登录信息超时', 'errorCode': '002', 'status': False}
         # {"msg":"该账号存在异常,单点登录失败","code":-1,"msgShowType":"none","status":false}
-        if type(res) is dict and not res.get("status", True):
+        if isinstance(res, dict) and not res.get("status", True):
             resp_msg = res.get("msg", "")
             if res.get("code") == -1:
                 if resp_msg == "secret解密失败,请检查加密内容.":
@@ -235,7 +235,7 @@ class OaApi:
                 headers[self.TOKEN_KEY] = self.get_token()
                 return self.__request(api_path, rf, headers=headers, need_json=need_json, **kwargs)
             raise ValueError(f"Error: {resp.text}")
-        if type(res) is dict and res.get("code", "") and res["code"] != "SUCCESS":
+        if isinstance(res, dict) and res.get("code", "") and res["code"] != "SUCCESS":
             error_msg = f"OA提示: {res['code']}, {res.get('errMsg', '')};"
             if api_settings.DEBUG:
                 error_msg = f"{error_msg}\n{json.dumps(res, ensure_ascii=False)}"

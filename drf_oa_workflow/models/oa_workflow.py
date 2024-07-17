@@ -2,16 +2,15 @@ import datetime
 
 from django.db import models
 
-from drf_oa_workflow.choices import (
-    OAFlowNodeType,
-    OAWFCOIsRemarks,
-    OAWFCOViewType,
-    OAWFHandleReSubmit,
-    OAWFHandleReSubmitDefault,
-    OAWFRejectType,
-    OAWorkflowLogTypes,
-)
-from drf_oa_workflow.db.manager import CurrentOperatorManager, WorkflowManager
+from drf_oa_workflow.choices import OAFlowNodeType
+from drf_oa_workflow.choices import OAWFCOIsRemarks
+from drf_oa_workflow.choices import OAWFCOViewType
+from drf_oa_workflow.choices import OAWFHandleReSubmit
+from drf_oa_workflow.choices import OAWFHandleReSubmitDefault
+from drf_oa_workflow.choices import OAWFRejectType
+from drf_oa_workflow.choices import OAWorkflowLogTypes
+from drf_oa_workflow.db.manager import CurrentOperatorManager
+from drf_oa_workflow.db.manager import WorkflowManager
 from drf_oa_workflow.db.models import OADbBaseModel
 
 
@@ -40,23 +39,49 @@ class WorkflowCurrentOperator(OADbBaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="创建人ID",
     )
-    USERTYPE = models.IntegerField(null=True, verbose_name="用户类型(1、人力资源; 2、客户)")
-    VIEWTYPE = models.IntegerField(null=True, choices=OAWFCOViewType.choices, verbose_name="查看标志")
-    ISREMARK = models.IntegerField(null=True, choices=OAWFCOIsRemarks.choices, verbose_name="操作类型")
+    USERTYPE = models.IntegerField(
+        null=True, verbose_name="用户类型(1、人力资源; 2、客户)"
+    )
+    VIEWTYPE = models.IntegerField(
+        null=True, choices=OAWFCOViewType.choices, verbose_name="查看标志"
+    )
+    ISREMARK = models.IntegerField(
+        null=True, choices=OAWFCOIsRemarks.choices, verbose_name="操作类型"
+    )
     ISLASTTIMES = models.IntegerField(null=True)
-    ISREJECT = models.CharField(max_length=100, null=True, blank=True, verbose_name="是否为退回前的节点操作人")
-    ISBEREJECT = models.CharField(max_length=100, null=True, blank=True, verbose_name="是否退回")
-    RECEIVEDATE = models.CharField(max_length=200, null=True, blank=True, verbose_name="接收日期")
-    RECEIVETIME = models.CharField(max_length=200, null=True, blank=True, verbose_name="接收时间")
-    VIEWDATE = models.CharField(max_length=200, null=True, blank=True, verbose_name="查看日期")
-    VIEWTIME = models.CharField(max_length=200, null=True, blank=True, verbose_name="查看时间")
-    FIRSTVIEWDATE = models.CharField(max_length=200, null=True, blank=True, verbose_name="初次查看日期")
-    FIRSTVIEWTIME = models.CharField(max_length=200, null=True, blank=True, verbose_name="初次查看时间")
-    OPERATEDATE = models.CharField(max_length=200, null=True, blank=True, verbose_name="操作日期")
-    OPERATETIME = models.CharField(max_length=200, null=True, blank=True, verbose_name="操作时间")
+    ISREJECT = models.CharField(  # noqa: DJ001
+        max_length=100, null=True, blank=True, verbose_name="是否为退回前的节点操作人"
+    )
+    ISBEREJECT = models.CharField(  # noqa: DJ001
+        max_length=100, null=True, blank=True, verbose_name="是否退回"
+    )
+    RECEIVEDATE = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="接收日期"
+    )
+    RECEIVETIME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="接收时间"
+    )
+    VIEWDATE = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="查看日期"
+    )
+    VIEWTIME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="查看时间"
+    )
+    FIRSTVIEWDATE = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="初次查看日期"
+    )
+    FIRSTVIEWTIME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="初次查看时间"
+    )
+    OPERATEDATE = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="操作日期"
+    )
+    OPERATETIME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="操作时间"
+    )
     NODEID = models.IntegerField(null=True)
     AGENTORBYAGENTID = models.IntegerField(null=True)
-    AGENTTYPE = models.CharField(max_length=200, null=True, blank=True)
+    AGENTTYPE = models.CharField(max_length=200, null=True, blank=True)  # noqa: DJ001
 
     objects = CurrentOperatorManager()
 
@@ -73,7 +98,7 @@ class WorkflowCurrentOperator(OADbBaseModel):
         if oa_user_id != self.USERID_id:
             return
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now()  # noqa: DTZ005
         now_date = now.strftime("%Y-%m-%d")
         now_time = now.strftime("%H:%M:%S")
         # 查看类型
@@ -98,8 +123,12 @@ class WorkflowCurrentOperator(OADbBaseModel):
 class WorkflowType(OADbBaseModel):
     ID = models.IntegerField(primary_key=True)
     TYPENAME = models.CharField(verbose_name="目录", max_length=1000)
-    TYPEDESC = models.CharField(verbose_name="描述", null=True, blank=True, max_length=1000)
-    ICONKEY = models.CharField(verbose_name="ICONKEY", null=True, blank=True, max_length=1000)
+    TYPEDESC = models.CharField(  # noqa: DJ001
+        verbose_name="描述", null=True, blank=True, max_length=1000
+    )
+    ICONKEY = models.CharField(  # noqa: DJ001
+        verbose_name="ICONKEY", null=True, blank=True, max_length=1000
+    )
     DSPORDER = models.IntegerField(verbose_name="顺序", null=True, blank=True)
     UUID = models.CharField(verbose_name="UUID", max_length=50)
 
@@ -115,7 +144,9 @@ class WorkflowBase(OADbBaseModel):
     """
 
     ID = models.IntegerField(primary_key=True)
-    WORKFLOWNAME = models.CharField(max_length=300, blank=True, null=True, verbose_name="流程名称")
+    WORKFLOWNAME = models.CharField(  # noqa: DJ001
+        max_length=300, blank=True, null=True, verbose_name="流程名称"
+    )
     FORMID = models.IntegerField(verbose_name="表单ID")
     # WORKFLOWTYPE = models.IntegerField(verbose_name="所属路径ID")
     WORKFLOWTYPE = models.ForeignKey(
@@ -127,11 +158,17 @@ class WorkflowBase(OADbBaseModel):
         related_name="+",
         verbose_name="流程目录ID",
     )
-    ISVALID = models.IntegerField(verbose_name="生效信息")  # 0：无效 1：有效 2:测试 3:历史版本
+    ISVALID = models.IntegerField(
+        verbose_name="生效信息"
+    )  # 0：无效 1：有效 2:测试 3:历史版本
     VERSION = models.IntegerField(verbose_name="版本", null=True)
-    ISTEMPLATE = models.CharField(verbose_name="是否为流程模板", max_length=10, null=True)  # 0：否 1：是
+    ISTEMPLATE = models.CharField(  # noqa: DJ001
+        verbose_name="是否为流程模板", max_length=10, null=True
+    )  # 0：否 1：是
     TEMPLATEID = models.IntegerField(verbose_name="模板ID", null=True)
-    ACTIVEVERSIONID = models.IntegerField(verbose_name="当前流程所属活动版本id", null=True)
+    ACTIVEVERSIONID = models.IntegerField(
+        verbose_name="当前流程所属活动版本id", null=True
+    )
 
     def into_srm_dict(self):
         """
@@ -167,10 +204,18 @@ class WorkflowNodeBase(OADbBaseModel):
     """
 
     ID = models.IntegerField(primary_key=True)
-    NODENAME = models.CharField(max_length=300, blank=True, null=True, verbose_name="节点名称")
-    ISSTART = models.CharField(verbose_name="是否创建节点", max_length=10)  # 0：否，1：是
-    ISREJECT = models.CharField(verbose_name="当前节点是否可以退回", max_length=10)  # 0：否，1：是
-    ISREOPEN = models.CharField(verbose_name="是否重新打开", max_length=10)  # 0：否，1：是
+    NODENAME = models.CharField(  # noqa: DJ001
+        max_length=300, blank=True, null=True, verbose_name="节点名称"
+    )
+    ISSTART = models.CharField(
+        verbose_name="是否创建节点", max_length=10
+    )  # 0：否，1：是
+    ISREJECT = models.CharField(
+        verbose_name="当前节点是否可以退回", max_length=10
+    )  # 0：否，1：是
+    ISREOPEN = models.CharField(
+        verbose_name="是否重新打开", max_length=10
+    )  # 0：否，1：是
     ISEND = models.CharField(verbose_name="是否归档节点", max_length=10)  # 0：否，1：是
 
     class Meta:
@@ -203,16 +248,32 @@ class WorkflowFlowNode(OADbBaseModel):
         related_name="+",
         verbose_name="节点信息",
     )
-    ISSELECTREJECTNODE = models.SmallIntegerField(null=True, choices=OAWFRejectType.choices, verbose_name="退回方式")
-    REJECTABLENODES = models.TextField(null=True, blank=True, verbose_name="指定可退回节点")
-    ISSUBMITDIRECTNODE = models.CharField(
-        max_length=10, null=True, blank=True, choices=OAWFHandleReSubmit.choices, verbose_name="退回后再提交到达节点处理方式"
+    ISSELECTREJECTNODE = models.SmallIntegerField(
+        null=True, choices=OAWFRejectType.choices, verbose_name="退回方式"
     )
-    ISSUBMITDIRECTNODEDEFT = models.CharField(
-        max_length=10, null=True, blank=True, choices=OAWFHandleReSubmitDefault.choices, verbose_name="默认退回后再提交到达节点处理方式"
+    REJECTABLENODES = models.TextField(  # noqa: DJ001
+        null=True, blank=True, verbose_name="指定可退回节点"
     )
-    NODETYPE = models.CharField(
-        max_length=10, null=True, blank=True, choices=OAFlowNodeType.choices, verbose_name="节点类型"
+    ISSUBMITDIRECTNODE = models.CharField(  # noqa: DJ001
+        max_length=10,
+        null=True,
+        blank=True,
+        choices=OAWFHandleReSubmit.choices,
+        verbose_name="退回后再提交到达节点处理方式",
+    )
+    ISSUBMITDIRECTNODEDEFT = models.CharField(  # noqa: DJ001
+        max_length=10,
+        null=True,
+        blank=True,
+        choices=OAWFHandleReSubmitDefault.choices,
+        verbose_name="默认退回后再提交到达节点处理方式",
+    )
+    NODETYPE = models.CharField(  # noqa: DJ001
+        max_length=10,
+        null=True,
+        blank=True,
+        choices=OAFlowNodeType.choices,
+        verbose_name="节点类型",
     )
 
     class Meta:
@@ -262,7 +323,9 @@ class WorkflowNodeLink(OADbBaseModel):
         related_name="from_relations",
         verbose_name="目标节点",
     )
-    ISREJECT = models.CharField(verbose_name="节点是否可退回", max_length=10)  # 0：否，1：是
+    ISREJECT = models.CharField(
+        verbose_name="节点是否可退回", max_length=10
+    )  # 0：否，1：是
     LINKNAME = models.CharField(verbose_name="出口名称", max_length=1000)
 
     class Meta:
@@ -313,8 +376,12 @@ class WorkflowRequestLog(OADbBaseModel):
         related_name="+",
         verbose_name="所属节点",
     )
-    LOGTYPE = models.CharField(
-        max_length=100, choices=OAWorkflowLogTypes.choices, null=True, blank=True, verbose_name="操作类型"
+    LOGTYPE = models.CharField(  # noqa: DJ001
+        max_length=100,
+        choices=OAWorkflowLogTypes.choices,
+        null=True,
+        blank=True,
+        verbose_name="操作类型",
     )
     OPERATOR = models.ForeignKey(
         "drf_oa_workflow.HRMResource",
@@ -325,11 +392,17 @@ class WorkflowRequestLog(OADbBaseModel):
         related_name="+",
         verbose_name="操作人ID",
     )
-    OPERATEDATE = models.CharField(max_length=200, null=True, blank=True, verbose_name="操作日期")
-    OPERATETIME = models.CharField(max_length=200, null=True, blank=True, verbose_name="操作时间")
-    RECEIVEDPERSONS = models.TextField(null=True, blank=True, verbose_name="接收人")
-    RECEIVEDPERSONIDS = models.TextField(null=True, blank=True, verbose_name="接收人IDS")
-    REMARK = models.TextField(null=True, blank=True, verbose_name="操作备注")
+    OPERATEDATE = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="操作日期"
+    )
+    OPERATETIME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="操作时间"
+    )
+    RECEIVEDPERSONS = models.TextField(null=True, blank=True, verbose_name="接收人")  # noqa: DJ001
+    RECEIVEDPERSONIDS = models.TextField(  # noqa: DJ001
+        null=True, blank=True, verbose_name="接收人IDS"
+    )
+    REMARK = models.TextField(null=True, blank=True, verbose_name="操作备注")  # noqa: DJ001
 
     class Meta:
         managed = False
@@ -352,8 +425,12 @@ class WorkflowRequestBase(OADbBaseModel):
         related_name="+",
         verbose_name="流程ID",
     )
-    REQUESTMARK = models.CharField(max_length=200, null=True, blank=True, verbose_name="编号")
-    REQUESTNAME = models.CharField(max_length=200, null=True, blank=True, verbose_name="标题")
+    REQUESTMARK = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="编号"
+    )
+    REQUESTNAME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="标题"
+    )
     # CURRENTNODEID = models.IntegerField(verbose_name="当前节点ID")
     CURRENTNODEID = models.ForeignKey(
         WorkflowNodeBase,
@@ -364,7 +441,9 @@ class WorkflowRequestBase(OADbBaseModel):
         related_name="+",
         verbose_name="当前节点ID",
     )
-    STATUS = models.CharField(max_length=200, null=True, blank=True, verbose_name="状态")
+    STATUS = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="状态"
+    )
     CREATER = models.ForeignKey(
         "drf_oa_workflow.HRMResource",
         db_column="CREATER",
@@ -383,11 +462,21 @@ class WorkflowRequestBase(OADbBaseModel):
         related_name="+",
         verbose_name="最后操作人ID",
     )
-    CREATEDATE = models.CharField(max_length=200, null=True, blank=True, verbose_name="创建日期")
-    CREATETIME = models.CharField(max_length=200, null=True, blank=True, verbose_name="创建时间")
-    LASTOPERATEDATE = models.CharField(max_length=200, null=True, blank=True, verbose_name="最后操作日期")
-    LASTOPERATETIME = models.CharField(max_length=200, null=True, blank=True, verbose_name="最后操作时间")
-    REQUESTLEVEL = models.CharField(max_length=200, null=True, blank=True, verbose_name="紧急度")
+    CREATEDATE = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="创建日期"
+    )
+    CREATETIME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="创建时间"
+    )
+    LASTOPERATEDATE = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="最后操作日期"
+    )
+    LASTOPERATETIME = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="最后操作时间"
+    )
+    REQUESTLEVEL = models.CharField(  # noqa: DJ001
+        max_length=200, null=True, blank=True, verbose_name="紧急度"
+    )
 
     objects = WorkflowManager()
 

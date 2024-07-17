@@ -1,7 +1,10 @@
 from django.contrib import admin
 
 # from django.contrib.auth import get_user_model
-from django.db.models import Case, F, Value, When
+from django.db.models import Case
+from django.db.models import F
+from django.db.models import Value
+from django.db.models import When
 
 from .models import OaUserInfo
 
@@ -9,7 +12,15 @@ from .models import OaUserInfo
 @admin.register(OaUserInfo)
 class OaUserInfoAdmin(admin.ModelAdmin):
     exclude = ("staff_code",)
-    list_display = ("user_id", "name", "staff_code_str", "dept_id", "dept_name", "has_system_user", "system_user")
+    list_display = (
+        "user_id",
+        "name",
+        "staff_code_str",
+        "dept_id",
+        "dept_name",
+        "has_system_user",
+        "system_user",
+    )
     readonly_fields = ("user_id", "name", "staff_code_str", "dept_id", "dept_name")
     search_fields = ["user_id", "name", "staff_code_str", "dept_name"]
     search_help_text = "查询OA用户ID、名称、工号或者部门"
@@ -21,7 +32,12 @@ class OaUserInfoAdmin(admin.ModelAdmin):
             .get_queryset(request)
             .select_related("staff_code")
             .annotate(staff_code_str=F("staff_code_id"))
-            .annotate(has_system_user=Case(When(staff_code__id__isnull=False, then=Value(True)), default=Value(False)))
+            .annotate(
+                has_system_user=Case(
+                    When(staff_code__id__isnull=False, then=Value(True)),  # noqa: FBT003
+                    default=Value(False),  # noqa: FBT003
+                )
+            )
             .order_by("-has_system_user")
         )
 
@@ -36,7 +52,9 @@ class OaUserInfoAdmin(admin.ModelAdmin):
     @admin.display(description="相关本系统用户")
     def system_user(self, obj):
         if obj.staff_code:
-            return f"{obj.staff_code.id}-{obj.staff_code.username}-{obj.staff_code.name}"
+            return (
+                f"{obj.staff_code.id}-{obj.staff_code.username}-{obj.staff_code.name}"
+            )
         return obj.staff_code
 
     def get_actions(self, request):

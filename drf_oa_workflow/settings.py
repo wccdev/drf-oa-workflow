@@ -40,7 +40,7 @@ def perform_import(val, setting_name):
     """
     if val is None:
         return None
-    elif isinstance(val, str):
+    elif isinstance(val, str):  # noqa: RET505
         return import_from_string(val, setting_name)
     elif isinstance(val, (list, tuple)):
         return [import_from_string(item, setting_name) for item in val]
@@ -54,7 +54,7 @@ def import_from_string(val, setting_name):
     try:
         return import_module(val)
     except ImportError as e:
-        msg = f"Could not import '{val}' for API setting '{setting_name}'. {e.__class__.__name__}: {e}."
+        msg = f"Could not import '{val}' for API setting '{setting_name}'. {e.__class__.__name__}: {e}."  # noqa: E501
         raise ImportError(msg)
 
 
@@ -72,13 +72,13 @@ class APISettings:
 
     @property
     def user_settings(self):
-        if not hasattr(self, '_user_settings'):
+        if not hasattr(self, "_user_settings"):
             self._user_settings = getattr(settings, SETTING_PREFIX, {})
         return self._user_settings
 
     def __getattr__(self, attr):
         if attr not in self.defaults:
-            raise AttributeError("Invalid API setting: '%s'" % attr)
+            raise AttributeError(f"Invalid API setting: '{attr}'")
 
         try:
             # Check if present in user settings
@@ -100,8 +100,8 @@ class APISettings:
         for attr in self._cached_attrs:
             delattr(self, attr)
         self._cached_attrs.clear()
-        if hasattr(self, '_user_settings'):
-            delattr(self, '_user_settings')
+        if hasattr(self, "_user_settings"):
+            delattr(self, "_user_settings")
 
 
 api_settings = APISettings(None, DEFAULTS, IMPORT_STRINGS)

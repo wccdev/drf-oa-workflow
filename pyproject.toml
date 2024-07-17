@@ -99,3 +99,98 @@ skip_gitignore = true
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff.lint]
+select = [
+  "F",
+  "E",
+  "W",
+  "C90",
+  "I",
+  "N",
+  "UP",
+  "YTT",
+  # "ANN", # flake8-annotations: we should support this in the future but 100+ errors atm
+  "ASYNC",
+  "S",
+  "BLE",
+  "FBT",
+  "B",
+  "A",
+  "COM",
+  "C4",
+  "DTZ",
+  "T10",
+  "DJ",
+  "EM",
+  "EXE",
+  "FA",
+  'ISC',
+  "ICN",
+  "G",
+  'INP',
+  'PIE',
+  "T20",
+  'PYI',
+  'PT',
+  "Q",
+  "RSE",
+  "RET",
+  "SLF",
+  "SLOT",
+  "SIM",
+  "TID",
+  "TCH",
+  "INT",
+  # "ARG", # Unused function argument
+  "PTH",
+  "ERA",
+  "PD",
+  "PGH",
+  "PL",
+  "TRY",
+  "FLY",
+  "PERF",
+  "RUF",
+  "UP",  # pyupgrade
+]
+ignore = [
+  "SLF001",
+  "RUF001",
+  "RUF002",
+  "RUF003",
+  "PLR0912",
+  "DTZ011",
+  "EM101",
+  "EM102",
+  "TRY003",
+  "B008",  # do not perform function calls in argument defaults
+  "B904", # use 'raise ... from err'
+  "B905", # use explicit 'strict=' parameter with 'zip()'
+  "C901",  # too complex
+  "N818", #  Exception name should be named with an Error suffix
+  "S101", # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
+  "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+  "SIM102", # sometimes it's better to nest
+  "ERA001", # allow comment code
+  "COM812",
+  "ISC001",
+  "BLE001",
+  "UP038" # Checks for uses of isinstance/issubclass that take a tuple
+          # of types for comparison.
+          # Deactivated because it can make the code slow:
+          # https://github.com/astral-sh/ruff/issues/7871
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = ["srm", "config"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"  # Accepts: "google", "numpy", or "pep257".

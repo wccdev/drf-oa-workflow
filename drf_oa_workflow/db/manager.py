@@ -1,5 +1,9 @@
 from django.db import models
-from django.db.models import Case, F, Q, Value, When
+from django.db.models import Case
+from django.db.models import F
+from django.db.models import Q
+from django.db.models import Value
+from django.db.models import When
 
 from drf_oa_workflow.db.function import ConvertOADbDatetime
 from drf_oa_workflow.settings import api_settings
@@ -25,7 +29,11 @@ class CurrentOperatorManager(BaseOADbManager):
             self.get_queryset()
             .filter(
                 Q(
-                    ISREMARK__in=[OAWFCOIsRemarks.NOT_OPERATED, OAWFCOIsRemarks.ARCHIVED, OAWFCOIsRemarks.CC_WITH_SUB],
+                    ISREMARK__in=[
+                        OAWFCOIsRemarks.NOT_OPERATED,
+                        OAWFCOIsRemarks.ARCHIVED,
+                        OAWFCOIsRemarks.CC_WITH_SUB,
+                    ],
                     OPERATEDATE__isnull=True,
                     OPERATETIME__isnull=True,
                 )
@@ -34,7 +42,9 @@ class CurrentOperatorManager(BaseOADbManager):
                 NODEID=F("REQUESTID__CURRENTNODEID_id"),
             )
             .annotate(
-                un_operator_id=F("USERID_id"), un_operator_name=F("USERID__LASTNAME"), request_id=F("REQUESTID_id")
+                un_operator_id=F("USERID_id"),
+                un_operator_name=F("USERID__LASTNAME"),
+                request_id=F("REQUESTID_id"),
             )
             .distinct()
         )
@@ -51,13 +61,19 @@ class WorkflowQuerySet(models.QuerySet):
             C_ISREJECT=F("current_operators__ISREJECT"),
             C_ISBEREJECT=F("current_operators__ISBEREJECT"),
             # createTime=Concat(F("CREATEDATE"), Value(" "), F("CREATETIME")),
-            # receiveTime=Concat(F("current_operators__RECEIVEDATE"), Value(" "), F("current_operators__RECEIVETIME")),
-            # lastOperateTime=Concat(F("LASTOPERATEDATE"), Value(" "), F("LASTOPERATETIME")),
+            # receiveTime=Concat(F("current_operators__RECEIVEDATE"), Value(" "), F("current_operators__RECEIVETIME")),  # noqa: E501
+            # lastOperateTime=Concat(F("LASTOPERATEDATE"), Value(" "), F("LASTOPERATETIME")),  # noqa: E501
             createTime=ConvertOADbDatetime("CREATEDATE", "CREATETIME"),
             receiveTime=Case(
                 When(
-                    Q(current_operators__RECEIVEDATE__isnull=False, current_operators__RECEIVETIME__isnull=False),
-                    then=ConvertOADbDatetime("current_operators__RECEIVEDATE", "current_operators__RECEIVETIME"),
+                    Q(
+                        current_operators__RECEIVEDATE__isnull=False,
+                        current_operators__RECEIVETIME__isnull=False,
+                    ),
+                    then=ConvertOADbDatetime(
+                        "current_operators__RECEIVEDATE",
+                        "current_operators__RECEIVETIME",
+                    ),
                 ),
                 default=Value(None),
             ),
@@ -105,5 +121,4 @@ class WorkflowQuerySet(models.QuerySet):
 
 class WorkflowManager(BaseOADbManager):
     def get_queryset(self):
-        queryset = WorkflowQuerySet(self.model, using=self._db, hints=self._hints)
-        return queryset
+        return WorkflowQuerySet(self.model, using=self._db, hints=self._hints)

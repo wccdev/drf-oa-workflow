@@ -13,30 +13,38 @@ from django.apps import apps as django_apps
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured
-from requests.exceptions import ConnectionError, JSONDecodeError
+from requests.exceptions import ConnectionError
+from requests.exceptions import JSONDecodeError
 from rest_framework.exceptions import APIException
 
 from drf_oa_workflow.models import HRMResource
-from drf_oa_workflow.settings import DEFAULT_SYNC_OA_USER_MODEL, SETTING_PREFIX, api_settings
+from drf_oa_workflow.settings import DEFAULT_SYNC_OA_USER_MODEL
+from drf_oa_workflow.settings import SETTING_PREFIX
+from drf_oa_workflow.settings import api_settings
 
 requests: system_requests = api_settings.REQUESTS_LIBRARY
 
 
 def get_sync_oa_user_model():
-    sync_oa_user_model = getattr(settings, "SYNC_OA_USER_MODEL", DEFAULT_SYNC_OA_USER_MODEL)
+    sync_oa_user_model = getattr(
+        settings, "SYNC_OA_USER_MODEL", DEFAULT_SYNC_OA_USER_MODEL
+    )
     try:
         return django_apps.get_model(sync_oa_user_model, require_ready=False)
     except ValueError:
-        raise ImproperlyConfigured("SYNC_OA_USER_MODEL must be of the form 'app_label.model_name'")
+        raise ImproperlyConfigured(
+            "SYNC_OA_USER_MODEL must be of the form 'app_label.model_name'"
+        )
     except LookupError:
         raise ImproperlyConfigured(
-            "SYNC_OA_USER_MODEL refers to model '%s' that has not been installed" % sync_oa_user_model
+            f"SYNC_OA_USER_MODEL refers to model {sync_oa_user_model} "
+            "that has not been installed"
         )
 
 
 class OaApi:
-    TOKEN_KEY = "token"
-    CACHE_TOKEN_KEY = "oa-api-token"
+    TOKEN_KEY = "token"  # noqa: S105
+    CACHE_TOKEN_KEY = "oa-api-token"  # noqa: S105
     REQUEST_CONTENTTYPE = "application/x-www-form-urlencoded; charset=utf-8"
     REQUEST_HEADERS = {"Content-Type": REQUEST_CONTENTTYPE}
 
@@ -52,19 +60,18 @@ class OaApi:
         """
         start = f"{cls.PUBLIC_KEY_PREFIX}\n"
         end = cls.PUBLIC_KEY_SUFFIX
-        result = ''
+        result = ""
         # 分割key，每64位长度换一行
         length = len(pub_key)
         divide = 64  # 切片长度
         offset = 0  # 拼接长度
         while length - offset > 0:
             if length - offset > divide:
-                result += pub_key[offset : offset + divide] + '\n'
+                result += pub_key[offset : offset + divide] + "\n"
             else:
-                result += pub_key[offset:] + '\n'
+                result += pub_key[offset:] + "\n"
             offset += divide
-        result = start + result + end
-        return result
+        return start + result + end
 
     def __init__(self):
         self.oa_host = api_settings.OA_HOST
@@ -93,15 +100,19 @@ class OaApi:
         :param staff_code: 用户工号或者为oa的登入名, A0009527
         """
         if not api_settings.OA_SSO_TOKEN_APP_ID:
-            raise ValueError(f"使用此方法请先配置f'{SETTING_PREFIX}'.'OA_SSO_TOKEN_APP_ID'")
+            raise ValueError(
+                f"使用此方法请先配置f'{SETTING_PREFIX}'.'OA_SSO_TOKEN_APP_ID'"
+            )
         api_path = "/ssologin/getToken"
         headers = {"Content-Type": self.REQUEST_CONTENTTYPE}
         post_data = {"appid": api_settings.OA_SSO_TOKEN_APP_ID, "loginid": staff_code}
-        token = self._post_oa(api_path, post_data=post_data, headers=headers, need_json=False)
+        token = self._post_oa(
+            api_path, post_data=post_data, headers=headers, need_json=False
+        )
         # RIGHT DCA2CD1A9AFA13A8CEA5C82A5CDE8D7ADABA81522626723EC559D733649FABDC
         # ERROR Token获取失败: 认证应用未注册
         if "失败" in token:
-            raise APIException(token)
+            raise APIException(f"[OA]{token}")
         return token
 
     @property
@@ -158,9 +169,13 @@ class OaApi:
         }
         res = self._post_oa(api_path, headers=headers)
         # resp.text {
-        # "msg":"获取成功!","code":0,"msgShowType":"none","status":true,"token":"e3d7e45b-805c-43c3-9c0c-e452135ae1ea"
+        # "msg":"获取成功!",
+        # "code":0,
+        # "msgShowType":"none",
+        # "status":true,
+        # "token":"e3d7e45b-805c-43c3-9c0c-e452135ae1ea"
         # }
-        print("新OA Token: ", res[self.TOKEN_KEY])
+        # print("新OA Token: ", res[self.TOKEN_KEY])
         self.token = res[self.TOKEN_KEY]
         cache.set(self.CACHE_TOKEN_KEY, self.token, timeout=None)
         return self.token
@@ -168,22 +183,24 @@ class OaApi:
     @property
     def _request_headers(self):
         if not self.encrypt_userid:
-            raise NotImplementedError("调用前请先使用.register_user(OA_USER_ID: str)方法注册当前要操作的OA账号")
-        headers = {
+            raise NotImplementedError(
+                "调用前请先使用.register_user(OA_USER_ID: str)"
+                "方法注册当前要操作的OA账号"
+            )
+        return {
             "Content-Type": self.REQUEST_CONTENTTYPE,
             "appid": self.app_id,
             self.TOKEN_KEY: self.token,
             "userid": self.encrypt_userid,
         }
-        return headers
 
     def __request(
         self,
         api_path,
         rf: any([system_requests.get, system_requests.post]),
-        headers: dict = None,
-        need_json=True,
-        **kwargs,  # noqa
+        headers: dict = None,  # noqa: RUF013 PEP 484
+        need_json=True,  # noqa: FBT002
+        **kwargs,
     ):
         url = f"{self.oa_host}{api_path}"
         headers = headers or self._request_headers
@@ -194,13 +211,15 @@ class OaApi:
         except Exception as e:
             raise APIException(str(e))
 
-        if resp.status_code != 200:
+        if resp.status_code != 200:  # noqa: PLR2004
             # 错误导致递归的问题
             # print(resp.text)
             # raise SystemError(f"OA: Response[{resp.status_code}]")
             self.__helpme(f"OA服务异常: Response[{resp.status_code}]")
             headers[self.TOKEN_KEY] = self.get_token()
-            return self.__request(api_path, rf, headers=headers, need_json=need_json, **kwargs)
+            return self.__request(
+                api_path, rf, headers=headers, need_json=need_json, **kwargs
+            )
 
         if not need_json:
             return resp.text
@@ -208,15 +227,15 @@ class OaApi:
         try:
             res = resp.json()
         except (JSONDecodeError, BaseJSONDecodeError):
+            # res = {"code": -1}
             raise ValueError(f"OA返回异常: {resp.text}")
-            res = {"code": -1}
 
         # TODO 错误响应
-        # {"msg":"secret解密失败,请检查加密内容.","code":-1,"msgShowType":"none","status":false}
-        # {'msg':'token不存在或者超时：4225b79b-9407-47ca-82ab-d66850c4ec3e','code':-1,'msgShowType':'none','status':False}
+        # {"msg":"secret解密失败,请检查加密内容.","code":-1,"msgShowType":"none","status":false}  # noqa: E501
+        # {'msg':'token不存在或者超时：4225b79b-9407-47ca-82ab-d66850c4ec3e','code':-1,'msgShowType':'none','status':False}  # noqa: E501
         # {'msg': '登录信息超时', 'errorCode': '002', 'status': False}
-        # {"msg":"该账号存在异常,单点登录失败","code":-1,"msgShowType":"none","status":false}
-        if type(res) is dict and not res.get("status", True):
+        # {"msg":"该账号存在异常,单点登录失败","code":-1,"msgShowType":"none","status":false}  # noqa: E501
+        if isinstance(res, dict) and not res.get("status", True):
             resp_msg = res.get("msg", "")
             if res.get("code") == -1:
                 if resp_msg == "secret解密失败,请检查加密内容.":
@@ -226,33 +245,67 @@ class OaApi:
                 elif resp_msg.startswith("token不存在或者超时"):
                     self.__helpme(resp.text)
                     headers[self.TOKEN_KEY] = self.get_token()
-                    return self.__request(api_path, rf, headers=headers, need_json=need_json, **kwargs)
+                    return self.__request(
+                        api_path, rf, headers=headers, need_json=need_json, **kwargs
+                    )
                 else:
                     explain_suf = "(或为OA License过期)"
                 raise APIException(detail=f"OA Error: {resp_msg}。{explain_suf}")
             if resp_msg == "登录信息超时":
                 self.__helpme(resp.text)
                 headers[self.TOKEN_KEY] = self.get_token()
-                return self.__request(api_path, rf, headers=headers, need_json=need_json, **kwargs)
+                return self.__request(
+                    api_path, rf, headers=headers, need_json=need_json, **kwargs
+                )
             raise ValueError(f"Error: {resp.text}")
-        if type(res) is dict and res.get("code", "") and res["code"] != "SUCCESS":
+        if isinstance(res, dict) and res.get("code", "") and res["code"] != "SUCCESS":
             error_msg = f"OA提示: {res['code']}, {res.get('errMsg', '')};"
             if api_settings.DEBUG:
                 error_msg = f"{error_msg}\n{json.dumps(res, ensure_ascii=False)}"
             raise APIException(detail=error_msg)
         return res
 
-    def _get_oa(self, api: str, params: dict = None, headers: dict = None, need_json=True):
-        res = self.__request(api, requests.get, params=params, headers=headers, need_json=need_json)
+    def _get_oa(
+        self,
+        api: str,
+        params: dict = None,  # noqa: RUF013 PEP 484
+        headers: dict = None,  # noqa: RUF013 PEP 484
+        need_json=True,  # noqa: FBT002
+    ):
+        res = self.__request(
+            api, requests.get, params=params, headers=headers, need_json=need_json
+        )
         self.recursion_c = 0
         return res
 
-    def _post_oa(self, api: str, post_data: dict = None, headers: dict = None, need_json=True, **kwargs):
-        res = self.__request(api, requests.post, data=post_data, headers=headers, need_json=need_json, **kwargs)
+    def _post_oa(
+        self,
+        api: str,
+        post_data: dict = None,  # noqa: RUF013 PEP 484
+        headers: dict = None,  # noqa: RUF013 PEP 484
+        need_json=True,  # noqa: FBT002
+        **kwargs,
+    ):
+        res = self.__request(
+            api,
+            requests.post,
+            data=post_data,
+            headers=headers,
+            need_json=need_json,
+            **kwargs,
+        )
         self.recursion_c = 0
         return res
 
-    def _page_data(self, page_count_path, page_data_path, workflow_id, page=1, page_size=10, conditions: dict = None):
+    def _page_data(  # noqa: PLR0913
+        self,
+        page_count_path,
+        page_data_path,
+        workflow_id,
+        page=1,
+        page_size=10,
+        conditions: dict = None,  # noqa: RUF013 PEP 484
+    ):
         """
         请求分页数据
         :param page_count_path:
@@ -283,13 +336,19 @@ class OaApi:
                 }
             )
         }
-        resp = self._post_oa(page_count_path, post_data=search_conditions, need_json=False)
+        resp = self._post_oa(
+            page_count_path, post_data=search_conditions, need_json=False
+        )
         todo_count = int(resp)
 
         if (page - 1) * page_size >= todo_count:
             return [], page, todo_count
 
-        post_data = {"pageNo": str(page), "pageSize": str(page_size), **search_conditions}
+        post_data = {
+            "pageNo": str(page),
+            "pageSize": str(page_size),
+            **search_conditions,
+        }
         res: list = self._post_oa(
             page_data_path,
             post_data=post_data,  # , need_json=False
@@ -368,8 +427,7 @@ class OaApi:
             f"&isFlowModel=0&hasFreeNode=0&showE9Pic=1&isFromWfForm=true&workflowId={oa_workflow_id}"
         )
         oa_sso_token = self.get_sso_token(staff_code)
-        oa_chat_url = f"{oa_host}{get_chat_path}&ssoToken={oa_sso_token}"
-        return oa_chat_url
+        return f"{oa_host}{get_chat_path}&ssoToken={oa_sso_token}"
 
     def get_workflow_chart_xml(self, oa_workflow_id):
         """
@@ -388,7 +446,9 @@ class OaApi:
             return ""
 
         # xml中的节点名value的值需要base64解码
-        b64_node_names = re.findall(r"value=\"base64_(?P<b64_node_name>\S+)\"", xml_content)
+        b64_node_names = re.findall(
+            r"value=\"base64_(?P<b64_node_name>\S+)\"", xml_content
+        )
         b64_node_names = set(b64_node_names)
         for i in b64_node_names:
             node_name = base64.b64decode(i).decode()
@@ -405,7 +465,12 @@ class OaWorkFlow(OaApi):
         count_api_path = "/api/workflow/paService/getToDoWorkflowRequestCount"
         data_api_path = "/api/workflow/paService/getToDoWorkflowRequestList"
         data, page, total_count = self._page_data(
-            count_api_path, data_api_path, workflow_id, page=page, page_size=page_size, conditions=conditions
+            count_api_path,
+            data_api_path,
+            workflow_id,
+            page=page,
+            page_size=page_size,
+            conditions=conditions,
         )
         # 示例数据 api_example_data.TODO_LIST_DEMO
         return data, page, total_count
@@ -417,7 +482,12 @@ class OaWorkFlow(OaApi):
         count_api_path = "/api/workflow/paService/getDoingWorkflowRequestCount"
         data_api_path = "/api/workflow/paService/getDoingWorkflowRequestList"
         data, page, total_count = self._page_data(
-            count_api_path, data_api_path, workflow_id, page=page, page_size=page_size, conditions=conditions
+            count_api_path,
+            data_api_path,
+            workflow_id,
+            page=page,
+            page_size=page_size,
+            conditions=conditions,
         )
         return data, page, total_count
 
@@ -428,7 +498,12 @@ class OaWorkFlow(OaApi):
         count_api_path = "/api/workflow/paService/getToBeReadWorkflowRequestCount"
         data_api_path = "/api/workflow/paService/getToBeReadWorkflowRequestList"
         data, page, total_count = self._page_data(
-            count_api_path, data_api_path, workflow_id, page=page, page_size=page_size, conditions=conditions
+            count_api_path,
+            data_api_path,
+            workflow_id,
+            page=page,
+            page_size=page_size,
+            conditions=conditions,
         )
         return data, page, total_count
 
@@ -439,7 +514,12 @@ class OaWorkFlow(OaApi):
         count_api_path = "/api/workflow/paService/getBeRejectWorkflowRequestCount"
         data_api_path = "/api/workflow/paService/getBeRejectWorkflowRequestList"
         data, page, total_count = self._page_data(
-            count_api_path, data_api_path, workflow_id, page=page, page_size=page_size, conditions=conditions
+            count_api_path,
+            data_api_path,
+            workflow_id,
+            page=page,
+            page_size=page_size,
+            conditions=conditions,
         )
         return data, page, total_count
 
@@ -450,7 +530,12 @@ class OaWorkFlow(OaApi):
         count_api_path = "/api/workflow/paService/getHandledWorkflowRequestCount"
         data_api_path = "/api/workflow/paService/getHandledWorkflowRequestList"
         data, page, total_count = self._page_data(
-            count_api_path, data_api_path, workflow_id, page=page, page_size=page_size, conditions=conditions
+            count_api_path,
+            data_api_path,
+            workflow_id,
+            page=page,
+            page_size=page_size,
+            conditions=conditions,
         )
         # 示例数据 api_example_data.HANDLED_LIST_DEMO
         return data, page, total_count
@@ -477,7 +562,7 @@ class OaWorkFlow(OaApi):
             result.append({"workflowTypeName": type_name, "workflows": list(g)})
         return result
 
-    def submit(self, post_data: dict, work_flow_id: str = None):
+    def submit(self, post_data: dict, work_flow_id: str = None):  # noqa: RUF013 PEP 484
         """
         创建流程
         :param post_data:
@@ -492,11 +577,16 @@ class OaWorkFlow(OaApi):
         # 示例数据 api_example_data.SUBMIT_DATA_DEMO
         api_path = "/api/workflow/paService/doCreateRequest"
         res: dict = self._post_oa(api_path, post_data=post_data)
-        oa_request_id = res["data"]["requestid"]
-        return oa_request_id
+        return res["data"]["requestid"]
 
-    def submit_new(
-        self, work_flow_id, main_data: list, detail_data: list = None, title="", remark="", request_level=""
+    def submit_new(  # noqa: PLR0913
+        self,
+        work_flow_id,
+        main_data: list,
+        detail_data: list = None,  # noqa: RUF013 PEP 484
+        title="",
+        remark="",
+        request_level="",
     ):
         """
         创建流程
@@ -528,10 +618,9 @@ class OaWorkFlow(OaApi):
         # 示例数据 api_example_data.SUBMIT_DATA_DEMO
         api_path = "/api/workflow/paService/doCreateRequest"
         res: dict = self._post_oa(api_path, post_data=post_data)
-        oa_request_id = res["data"]["requestid"]
-        return oa_request_id
+        return res["data"]["requestid"]
 
-    def review(self, request_id: str, remark="", extras: dict = None):
+    def review(self, request_id: str, remark="", extras: dict = None):  # noqa: RUF013 PEP 484
         """
         提交/审核
         :param request_id OA流程请求ID
@@ -545,7 +634,7 @@ class OaWorkFlow(OaApi):
         resp = self._post_oa(api_path, post_data=post_data)
 
         # ERROR DATA
-        _ERROR = {  # noqa
+        _ERROR = {  # noqa: N806
             "code": "NO_PERMISSION",
             "errMsg": {"isremark": 2},
             "reqFailMsg": {
@@ -557,7 +646,13 @@ class OaWorkFlow(OaApi):
         }
         return resp
 
-    def reject(self, request_id: str, node_id: str = "", handle_submit: int = None, remark=""):
+    def reject(
+        self,
+        request_id: str,
+        node_id: str = "",
+        handle_submit: int = None,  # noqa: RUF013 PEP 484
+        remark="",  # PEP 484
+    ):
         """
         退回流程
         :param request_id:
@@ -578,11 +673,15 @@ class OaWorkFlow(OaApi):
         if handle_submit is not None:
             other_params["isSubmitDirect"] = handle_submit
 
-        post_data = {"otherParams": json.dumps(other_params), "remark": remark, "requestId": request_id}
+        post_data = {
+            "otherParams": json.dumps(other_params),
+            "remark": remark,
+            "requestId": request_id,
+        }
         resp = self._post_oa(api_path, post_data=post_data)
 
         # ERROR DEEMO
-        _ERROR = {  # noqa
+        _ERROR = {  # noqa: N806
             "code": "NO_PERMISSION",
             "errMsg": {"isremark": 2, "takisremark": -1, "nodeType": 0},
             "reqFailMsg": {
@@ -592,10 +691,14 @@ class OaWorkFlow(OaApi):
                 "otherParams": {},
             },
         }
-        _OK = {  # noqa
+        _OK = {  # noqa: N806
             "code": "SUCCESS",
             "errMsg": {},
-            "reqFailMsg": {"keyParameters": {}, "msgInfo": {}, "otherParams": {"doAutoApprove": "0"}},
+            "reqFailMsg": {
+                "keyParameters": {},
+                "msgInfo": {},
+                "otherParams": {"doAutoApprove": "0"},
+            },
         }
         return resp
 
@@ -610,7 +713,7 @@ class OaWorkFlow(OaApi):
         params = {"requestid": request_id}
         # params = None
         resp = self._get_oa(api_path, params=params)
-        _ = {  # noqa
+        _ = {
             "code": "SUCCESS",
             "data": {
                 "chartUrl": """
@@ -635,9 +738,8 @@ class OaWorkFlow(OaApi):
         """
         api_path = "/api/workflow/paService/getRequestStatus"
         params = {"requestId": request_id}
-        resp = self._get_oa(api_path, params=params)
         # 示例数据 api_example_data.WF_STATUS_DATA_DEMO
-        return resp
+        return self._get_oa(api_path, params=params)
 
     def get_operator_info(self, request_id):
         """
@@ -646,8 +748,7 @@ class OaWorkFlow(OaApi):
         :return:
         """
         api_path = "/api/workflow/paService/getRequestOperatorInfo"
-        res = self._get_oa(api_path, params={"requestId": request_id})
-        return res
+        return self._get_oa(api_path, params={"requestId": request_id})
 
     def get_resources(self, request_id):
         """
@@ -667,7 +768,7 @@ class OaWorkFlow(OaApi):
         # result = _
         type_map = {1: "相关流程", 2: "相关文档", 3: "相关附件"}
         for res in result["data"]:
-            if res["type"] == 3:  # 相关附件
+            if res["type"] == 3:  # 相关附件  # noqa: PLR2004
                 pass
             res["typeName"] = type_map[res["type"]]
         return result
@@ -678,10 +779,12 @@ class OaWorkFlow(OaApi):
         :return:
         """
         api_path = "/api/workflow/paService/getRequestLog"
-        post_data = {"requestId": request_id, "otherParams": json.dumps({"pageSize": page_size, "pageNumber": page})}
-        resp = self._get_oa(api_path, params=post_data)
+        post_data = {
+            "requestId": request_id,
+            "otherParams": json.dumps({"pageSize": page_size, "pageNumber": page}),
+        }
         # 示例数据 api_example_data.WF_REMARK_DATA_DEMO
-        return resp
+        return self._get_oa(api_path, params=post_data)
 
     def get_info(self, request_id):
         """
@@ -690,9 +793,8 @@ class OaWorkFlow(OaApi):
         :return:
         """
         api_path = "/api/workflow/paService/getWorkflowRequest"
-        res = self._get_oa(api_path, params={"requestId": request_id})
         # 示例数据 api_example_data.WF_INFO_DATA_DEMO
-        return res
+        return self._get_oa(api_path, params={"requestId": request_id})
 
     def transmit(self, request_id, trans_type, user_id: str, remark: str = ""):
         """
@@ -704,7 +806,7 @@ class OaWorkFlow(OaApi):
         :return:
         """
         api_path = "/api/workflow/paService/forwardRequest"
-        if trans_type == 3:
+        if trans_type == 3:  # noqa: PLR2004
             if len(user_id.split(",")) > 1:
                 raise APIException(detail="转办只能转给一个用户")
         post_data = {
@@ -714,8 +816,7 @@ class OaWorkFlow(OaApi):
             "remark": remark,
             "requestId": request_id,
         }
-        resp = self._post_oa(api_path, post_data=post_data)
-        return resp
+        return self._post_oa(api_path, post_data=post_data)
 
     def recover(self, request_id):
         """
@@ -726,7 +827,7 @@ class OaWorkFlow(OaApi):
         api_path = "/api/workflow/paService/doForceDrawBack"
         post_data = {"requestId": request_id}
         resp = self._post_oa(api_path, post_data=post_data)
-        _ = {"code": "SUCCESS", "errMsg": {}}  # noqa
+        _ = {"code": "SUCCESS", "errMsg": {}}
         return resp
 
     def withdraw(self, request_id, remind="0", remark: str = ""):
@@ -743,22 +844,21 @@ class OaWorkFlow(OaApi):
             "remark": remark,
             "requestId": request_id,
         }
-        res = self._post_oa(api_path, post_data=post_data)
-        return res
+        return self._post_oa(api_path, post_data=post_data)
 
     def delete(self, request_id):
         """
         删除流程
           -- OA功能实践，退回到创建节点可删除流程
           -- 注意，需要OA在后台流程配置开启对应功能
-          -- 后端应用中心 > 流程引擎 > 路径管理 > 路径设置 > ${找到相关流程} > 基础设置 > 功能设置 > 退回到创建节点可删除流程 开启
+          -- 后端应用中心 > 流程引擎 > 路径管理 > 路径设置 > ${找到相关流程} > 基础设置
+          > 功能设置 > 退回到创建节点可删除流程 开启
         :param request_id:
         :return:
         """
         api_path = "/api/workflow/paService/deleteRequest"
         post_data = {"requestId": request_id}
-        res = self._post_oa(api_path, post_data=post_data)
-        return res
+        return self._post_oa(api_path, post_data=post_data)
 
     def get_operate_buttons(self, request_id):
         """
@@ -780,7 +880,9 @@ class OaWorkFlow(OaApi):
         # 2.获取OA流程的菜单按钮
         secret_data = {
             "signatureSecretKey": load_form_data["params"]["signatureSecretKey"],
-            "signatureAttributesStr": load_form_data["params"]["signatureAttributesStr"],
+            "signatureAttributesStr": load_form_data["params"][
+                "signatureAttributesStr"
+            ],
             "requestType": load_form_data["params"]["requestType"],
         }
         right_menu_api = "/api/workflow/reqform/rightMenu"

@@ -6,5 +6,4 @@ class OaWFRequestMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        response = self.get_response(handle_request(request))
-        return response
+        return self.get_response(handle_request(request))

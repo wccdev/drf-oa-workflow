@@ -3,9 +3,16 @@ from django.db import models
 
 UserModel = get_user_model()
 
+__all__ = [
+    "AbstractOaUserInfo",
+    "OaUserInfo",
+]
+
 
 class AbstractOaUserInfo(models.Model):
-    user_id = models.IntegerField(unique=True, primary_key=True, verbose_name="OA用户数据ID")
+    user_id = models.IntegerField(
+        unique=True, primary_key=True, verbose_name="OA用户数据ID"
+    )
     name = models.CharField(max_length=480, blank=True, default="", verbose_name="名称")
     staff_code = models.OneToOneField(
         UserModel,
@@ -18,7 +25,9 @@ class AbstractOaUserInfo(models.Model):
         verbose_name="OA用户工号",
     )
     dept_id = models.IntegerField(null=True, verbose_name="OA用户部门ID")
-    dept_name = models.CharField(max_length=480, blank=True, default="", verbose_name="OA用户部门")
+    dept_name = models.CharField(
+        max_length=480, blank=True, default="", verbose_name="OA用户部门"
+    )
 
     class Meta:
         abstract = True
@@ -35,3 +44,6 @@ class OaUserInfo(AbstractOaUserInfo):
 
     class Meta(AbstractOaUserInfo.Meta):
         swappable = "SYNC_OA_USER_MODEL"
+
+    def __str__(self):
+        return self.name

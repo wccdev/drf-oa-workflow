@@ -562,15 +562,15 @@ class OaWorkFlow(OaApi):
             result.append({"workflowTypeName": type_name, "workflows": list(g)})
         return result
 
-    def submit(self, post_data: dict, work_flow_id: str = None):  # noqa: RUF013 PEP 484
+    def submit(self, post_data: dict, workflow_id: str = None):  # noqa: RUF013 PEP 484
         """
         创建流程
         :param post_data:
-        :param work_flow_id: Oa中的流程ID
+        :param workflow_id: Oa中的流程ID
         # :param oa_detail_table: SCM单据ID
         """
-        # work_flow_id 51002 创建流程
-        # work_flow_id 51003 编辑流程
+        # workflow_id 51002 创建流程
+        # workflow_id 51003 编辑流程
 
         # doc_id 单据ID
 
@@ -581,7 +581,7 @@ class OaWorkFlow(OaApi):
 
     def submit_new(  # noqa: PLR0913
         self,
-        work_flow_id,
+        workflow_id,
         main_data: list,
         detail_data: list = None,  # noqa: RUF013 PEP 484
         title="",
@@ -590,14 +590,14 @@ class OaWorkFlow(OaApi):
     ):
         """
         创建流程
-        :param work_flow_id: Oa中的流程ID
+        :param workflow_id: Oa中的流程ID
         :param main_data: 提交流程的主表数据
         :param detail_data: 提交流程的子表数据
         :param title: 提交流程的标题
         :param remark: 提交流程的备注（审批意见）
         :param request_level: 流程紧急度（如果有）
         """
-        if not work_flow_id:
+        if not workflow_id:
             raise APIException("需要提交流程的流程ID")
         if not main_data:
             raise APIException("需要提交流程的主表数据")
@@ -608,7 +608,7 @@ class OaWorkFlow(OaApi):
             "remark": remark,
             # "requestLevel": "0",
             # "requestName": "标题",
-            "workflowId": str(work_flow_id),
+            "workflowId": str(workflow_id),
         }
         if title:
             post_data["requestName"] = title

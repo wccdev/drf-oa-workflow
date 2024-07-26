@@ -94,4 +94,4 @@ class WorkFlowNodeSimpleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OAWorkflowNode
-        exclude = ("oa_work_flow", "permissions", "form_permissions")
+        exclude = ("oa_workflow", "permissions", "form_permissions")

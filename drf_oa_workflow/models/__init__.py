@@ -11,6 +11,10 @@ __all__ = [
     "WorkflowType",
     "AbstractOaUserInfo",
     "OaUserInfo",
+    "OAWorkflowType",
+    "OAWorkflow",
+    "OAWorkflowNode",
+    "OAWorkflowEdge",
 ]
 
 from .oa_hrmresource import HRMDepartment
@@ -25,3 +29,7 @@ from .oa_workflow import WorkflowRequestLog
 from .oa_workflow import WorkflowType
 from .user import AbstractOaUserInfo
 from .user import OaUserInfo
+from .workflow_register import OAWorkflow
+from .workflow_register import OAWorkflowEdge
+from .workflow_register import OAWorkflowNode
+from .workflow_register import OAWorkflowType

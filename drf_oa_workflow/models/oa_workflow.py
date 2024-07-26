@@ -2,13 +2,7 @@ import datetime
 
 from django.db import models
 
-from drf_oa_workflow.choices import OAFlowNodeType
-from drf_oa_workflow.choices import OAWFCOIsRemarks
-from drf_oa_workflow.choices import OAWFCOViewType
-from drf_oa_workflow.choices import OAWFHandleReSubmit
-from drf_oa_workflow.choices import OAWFHandleReSubmitDefault
-from drf_oa_workflow.choices import OAWFRejectType
-from drf_oa_workflow.choices import OAWorkflowLogTypes
+from drf_oa_workflow import choices
 from drf_oa_workflow.db.manager import CurrentOperatorManager
 from drf_oa_workflow.db.manager import WorkflowManager
 from drf_oa_workflow.db.models import OADbBaseModel
@@ -54,10 +48,10 @@ class WorkflowCurrentOperator(OADbBaseModel):
         null=True, verbose_name="用户类型(1、人力资源; 2、客户)"
     )
     VIEWTYPE = models.IntegerField(
-        null=True, choices=OAWFCOViewType.choices, verbose_name="查看标志"
+        null=True, choices=choices.OAWFCOViewType.choices, verbose_name="查看标志"
     )
     ISREMARK = models.IntegerField(
-        null=True, choices=OAWFCOIsRemarks.choices, verbose_name="操作类型"
+        null=True, choices=choices.OAWFCOIsRemarks.choices, verbose_name="操作类型"
     )
     ISLASTTIMES = models.IntegerField(null=True)
     ISREJECT = models.CharField(  # noqa: DJ001
@@ -113,8 +107,8 @@ class WorkflowCurrentOperator(OADbBaseModel):
         now_date = now.strftime("%Y-%m-%d")
         now_time = now.strftime("%H:%M:%S")
         # 查看类型
-        if self.VIEWTYPE != OAWFCOViewType.VIEWED:
-            self.VIEWTYPE = OAWFCOViewType.VIEWED
+        if self.VIEWTYPE != choices.OAWFCOViewType.VIEWED:
+            self.VIEWTYPE = choices.OAWFCOViewType.VIEWED
         # 操作时间
         if not self.OPERATEDATE and not self.OPERATETIME:
             self.OPERATEDATE = now_date
@@ -180,28 +174,7 @@ class WorkflowBase(OADbBaseModel):
     ACTIVEVERSIONID = models.IntegerField(
         verbose_name="当前流程所属活动版本id", null=True
     )
-
-    def into_srm_dict(self):
-        """
-        CASE
-            WHEN VERSION IS NULL THEN NULL
-            ELSE TEMPLATEID
-        END AS parent_id,
-        CASE
-            WHEN VERSION IS NULL THEN 1
-            ELSE VERSION
-        END AS work_flow_version
-        """
-        return {
-            "work_flow_id": self.ID,
-            "name": self.WORKFLOWNAME,
-            "work_flow_type_id": self.WORKFLOWTYPE_id,
-            "work_flow_form_id": self.FORMID,
-            "is_active_version": self.ISVALID,
-            "parent_id": self.TEMPLATEID if self.VERSION else None,
-            "work_flow_version": self.VERSION or 1,
-            "active_version_id": self.ACTIVEVERSIONID,
-        }
+    DSPORDER = models.IntegerField(verbose_name="顺序", null=True, blank=True)
 
     class Meta:
         managed = False
@@ -260,7 +233,7 @@ class WorkflowFlowNode(OADbBaseModel):
         verbose_name="节点信息",
     )
     ISSELECTREJECTNODE = models.SmallIntegerField(
-        null=True, choices=OAWFRejectType.choices, verbose_name="退回方式"
+        null=True, choices=choices.OAWFRejectType.choices, verbose_name="退回方式"
     )
     REJECTABLENODES = models.TextField(  # noqa: DJ001
         null=True, blank=True, verbose_name="指定可退回节点"
@@ -269,21 +242,21 @@ class WorkflowFlowNode(OADbBaseModel):
         max_length=10,
         null=True,
         blank=True,
-        choices=OAWFHandleReSubmit.choices,
+        choices=choices.OAWFHandleReSubmit.choices,
         verbose_name="退回后再提交到达节点处理方式",
     )
     ISSUBMITDIRECTNODEDEFT = models.CharField(  # noqa: DJ001
         max_length=10,
         null=True,
         blank=True,
-        choices=OAWFHandleReSubmitDefault.choices,
+        choices=choices.OAWFHandleReSubmitDefault.choices,
         verbose_name="默认退回后再提交到达节点处理方式",
     )
     NODETYPE = models.CharField(  # noqa: DJ001
         max_length=10,
         null=True,
         blank=True,
-        choices=OAFlowNodeType.choices,
+        choices=choices.OAFlowNodeType.choices,
         verbose_name="节点类型",
     )
 
@@ -291,18 +264,6 @@ class WorkflowFlowNode(OADbBaseModel):
         managed = False
         db_table = 'ECOLOGY"."WORKFLOW_FLOWNODE'
         verbose_name = verbose_name_plural = "OA流程下的节点"
-
-    def into_srm_dict(self):
-        return {
-            "work_flow_id": self.WORKFLOWID_id,
-            "node_order": self.NODEORDER,
-            "node_id": self.NODEID_id,
-            "node_name": self.NODEID.NODENAME,
-            "is_start": self.NODEID.ISSTART,
-            "is_reject": self.NODEID.ISREJECT,
-            "is_reopen": self.NODEID.ISREOPEN,
-            "is_end": self.NODEID.ISEND,
-        }
 
 
 class WorkflowNodeLink(OADbBaseModel):
@@ -344,15 +305,6 @@ class WorkflowNodeLink(OADbBaseModel):
         db_table = 'ECOLOGY"."WORKFLOW_NODELINK'
         verbose_name = verbose_name_plural = "OA流程节点出口"
 
-    def into_srm_dict(self):
-        return {
-            "from_node_id": self.NODEID_id,
-            "from_node_name": self.NODEID.NODENAME,
-            "to_node_id": self.DESTNODEID_id,
-            "to_node_name": self.DESTNODEID.NODENAME,
-            "link_name": self.LINKNAME,
-        }
-
 
 class WorkflowRequestLog(OADbBaseModel):
     """
@@ -389,7 +341,7 @@ class WorkflowRequestLog(OADbBaseModel):
     )
     LOGTYPE = models.CharField(  # noqa: DJ001
         max_length=100,
-        choices=OAWorkflowLogTypes.choices,
+        choices=choices.OAWorkflowLogTypes.choices,
         null=True,
         blank=True,
         verbose_name="操作类型",

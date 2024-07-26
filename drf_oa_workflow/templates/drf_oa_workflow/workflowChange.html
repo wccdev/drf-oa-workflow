@@ -1,0 +1,122 @@
+{% extends "admin/change_form.html" %}
+
+{% load i18n admin_urls admin_modify %}
+{% load static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    #updateWarning {
+      color: red
+    }
+  </style>
+  <link rel="stylesheet" href="{% static 'drf_oa_workflow/css/element-ui.css' %}" />
+  <script src="{% static 'drf_oa_workflow/js/vue.js' %}"></script>
+  <script src="{% static 'drf_oa_workflow/js/element-ui.js' %}"></script>
+{% endblock extrahead %}
+{% block submit_buttons_bottom %}
+  <div class="submit-row">
+    <input type="submit" value="保存" class="default" name="_save" />
+    <input type="submit" value="保存并增加另一个" name="_addanother" />
+    <input type="submit" value="保存并继续编辑" name="_continue" />
+    <input type="submit" value="同步流程信息" name="_sync_flow_nodes" />
+    {#    <a href="/admin/approvals/oaworkflow/2/delete/" class="deletelink">删除</a>#}
+  </div>
+{% endblock submit_buttons_bottom %}
+{% block content %}
+  {{ block.super }}
+  <div>
+    {#    <h2>查看流程图</h2>#}
+    {#    <iframe style="width: 100%; height: 600px" src="{{ workflowChatUrl }}"></iframe>#}
+    {% if not getChatError %}
+      <h2>查看流程图</h2>
+      <br />
+      <iframe style="width: 100%; height: 600px" src="{{ workflowChatUrl }}"></iframe>
+    {% else %}
+      <h2>查看流程图失败</h2>
+      <br />
+      <div>{{ getChatError }}</div>
+    {% endif %}
+  </div>
+  <div id="wfVueApp">
+    <el-dialog title="确认修改OA流程ID吗" :visible.sync="dialogVisible" width="40%" :before-close="handleClose">
+    <h2 id="updateWarning">更换流程ID请谨慎！！！</h2>
+    <br />
+    <el-form label-position="left" :model="workFlowIds">
+    <el-form-item label="原OA流程ID">
+    <el-input v-model="workFlowIds.rawId" :readonly="true" />
+    </el-form-item>
+    <el-form-item label="新OA流程ID">
+    <el-input type="number" v-model="workFlowIds.newId" />
+    </el-form-item>
+    </el-form>
+    <span slot="footer" class="dialog-footer">
+      <el-button @click="closeDialog">取 消</el-button>
+      <el-button type="primary" @click="onSubmit" :disabled="!workFlowIds.newId || workFlowIds.newId==workFlowIds.rawId">确 定</el-button>
+    </span>
+    </el-dialog>
+    <el-button id="showDialogBtn" v-show="false" @click="showDialog">fake</el-button>
+  </div>
+  <script>
+    new Vue({
+      el: '#wfVueApp',
+      data: function() {
+        return {
+          dialogVisible: false,
+          workFlowIds: {
+            rawId: null,
+            newId: null
+          }
+        }
+      },
+      methods: {
+        showDialog(e) {
+          const workflowIdField = document.getElementById("id_workflow_id");
+          this.workFlowIds.rawId = workflowIdField.value;
+          this.dialogVisible = true;
+        },
+        closeDialog() {
+          this.dialogVisible = false;
+          this.workFlowIds.rawId = null;
+          this.workFlowIds.newId = null;
+        },
+        onSubmit() {
+          const workflowIdField = document.getElementById("id_workflow_id");
+          workflowIdField.value = this.workFlowIds.newId;
+          this.closeDialog();
+        },
+        handleClose(done) {
+          this.$confirm('确认关闭？')
+            .then(_ => {
+              this.closeDialog();
+              done();
+            })
+            .catch(_ => {});
+        }
+      }
+    })
+  </script>
+{% endblock content %}
+{% block admin_change_form_document_ready %}
+  {{ block.super }}
+  <script>
+    function adminOpenDialog() {
+      const hiddenButton = document.getElementById("showDialogBtn");
+      hiddenButton.click();
+    }
+    var changeField = document.getElementById("id_workflow_id");
+    changeField.readOnly = true;
+
+    document.addEventListener("DOMContentLoaded", function() {
+      if (changeField) {
+        changeField.addEventListener("click", function(event) {
+          // var changeConfirmed = confirm("确认要修改OA流程ID吗?");
+          // if (!changeConfirmed) {
+          //   event.target.value = event.target.defaultValue;
+          // }
+          adminOpenDialog();
+        });
+      }
+    });
+  </script>
+{% endblock admin_change_form_document_ready %}

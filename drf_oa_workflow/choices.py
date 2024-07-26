@@ -1,4 +1,10 @@
-from django.db.models import IntegerChoices, TextChoices
+from django.db.models import IntegerChoices
+from django.db.models import TextChoices
+
+
+class StatusChoice(IntegerChoices):
+    INVALID = 0, "无效"
+    VALID = 1, "有效"
 
 
 class TransmitTypes(IntegerChoices):
@@ -91,3 +97,10 @@ class OAFlowNodeType(TextChoices):
     REVIEW = "1", "审批"
     SUBMIT = "2", "提交"
     ARCHIVE = "3", "归档"
+
+
+class OAWorkflowActiveChoices(IntegerChoices):
+    IS_TEMPLATE = 0, "模板或无效"
+    YES = 1, "是"
+    UNDEFINED2 = 2, "测试"
+    NO = 3, "历史版本"

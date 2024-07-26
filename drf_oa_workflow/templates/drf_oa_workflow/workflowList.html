@@ -1,0 +1,53 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    function customAction(action, elementId) {
+      const cusButtons = document.getElementsByClassName("button cusButton");
+      for (var index = 0; index < cusButtons.length; index++) {
+        cusButtons.item(index).disabled = true;
+      }
+      // 构建 URL，替换 'your_model' 和 'custom_action' 为实际的模型和方法
+      if (action === "import") {
+        const oaWorkflowId = document.getElementById('oaWorkflowId').value;
+        const url = `{% url 'admin:drf_oa_workflow_oaworkflow_changelist'  %}?action=${action}&workflowId=${oaWorkflowId}`;
+        window.location.href = url;
+      } else {
+        const url = `{% url 'admin:drf_oa_workflow_oaworkflow_changelist'  %}?action=${action}`;
+        window.location.href = url;
+      }
+    }
+  </script>
+{% endblock extrahead %}
+{% block object-tools %}
+  {{ block.super }}
+  <div>
+    <select id="oaWorkflowId">
+      <option selected="" value="">请选择OA流程</option>
+      {% for v in oa_workflows %}
+        <option {% if v.disabled %}disabled{% endif %} value="{{ v.id }}">{{ v.type_name }}-{{ v.id }}-{{ v.name }}</option>
+      {% endfor %}
+    </select>
+    <button id="importButton"
+            class="button cusButton"
+            onclick="customAction('import', 'importButton')"
+            disabled>导入流程</button>
+    <button id="syncButton"
+            class="button cusButton"
+            onclick="customAction('sync', 'syncButton')">全部同步</button>
+  </div>
+  <script>
+    var inputField = document.getElementById('oaWorkflowId');
+    // 监听 input 输入事件
+    inputField.addEventListener('input', function(event) {
+      // 获取输入的值
+      var oaWorkflowId = event.target.value;
+      if (oaWorkflowId) {
+        document.getElementById("importButton").disabled = false;
+      } else {
+        document.getElementById("importButton").disabled = true;
+      }
+    });
+  </script>
+{% endblock object-tools %}

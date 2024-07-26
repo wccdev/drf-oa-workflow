@@ -1,6 +1,9 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 
 from drf_oa_workflow.choices import StatusChoice
+
+User = get_user_model()
 
 
 class BaseModel(models.Model):
@@ -20,3 +23,20 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
         verbose_name = "基础模型"
+
+
+class BaseAuditModel(BaseModel):
+    """
+    标准抽象审计模型,可直接继承使用
+    """
+
+    created_by = models.ForeignKey(
+        to=User, on_delete=models.DO_NOTHING, related_name="+", verbose_name="创建人"
+    )
+    updated_by = models.ForeignKey(
+        to=User, on_delete=models.DO_NOTHING, related_name="+", verbose_name="修改人"
+    )
+
+    class Meta:
+        abstract = True
+        verbose_name = "基础审计模型"

@@ -7,10 +7,12 @@ from drf_oa_workflow.views.workflow_register import OAWorkflowNodeViewSet
 router = DefaultRouter()
 
 # 流程注册信息
-router.register("workflows", OAWorkflowConfViewSet)
-router.register("workflows-nodes", OAWorkflowNodeViewSet)
+router.register("workflow-classes", OAWorkflowConfViewSet)
+router.register("workflow-classes-nodes", OAWorkflowNodeViewSet)
 
 # 流程待办/已办
 router.register("workflow-list", WorkflowsViewSet)
+# 流程审批等操作
+# router.register("approvals", ApprovalViewSet)
 
 urlpatterns = router.urls

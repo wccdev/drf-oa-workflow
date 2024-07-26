@@ -104,3 +104,33 @@ class OAWorkflowActiveChoices(IntegerChoices):
     YES = 1, "是"
     UNDEFINED2 = 2, "测试"
     NO = 3, "历史版本"
+
+
+class ApprovalStatus(IntegerChoices):
+    """
+    审核状态
+    """
+
+    PENDING = 1, "审批中"
+    APPROVED = 2, "审批通过"
+    REJECTED = 3, "审批拒绝"
+
+
+class WorkflowAction(IntegerChoices):
+    ADD = 1, "新增"
+    EDIT = 2, "变更"
+    VALID = 3, "启用"
+    INVALID = 4, "停用"
+    CANCEL = 5, "作废"
+
+
+class DocStatus(IntegerChoices):
+    """
+    单据状态
+    """
+
+    DRAT = 0, "待提交"
+    TO_VALID = 1, "待生效"
+    VALID = 2, "生效中"
+    TO_INVALID = 3, "待失效"
+    INVALID = 4, "已失效"

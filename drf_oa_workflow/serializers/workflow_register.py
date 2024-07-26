@@ -87,3 +87,11 @@ class OAWorkflowConfSaveSerializer(serializers.ModelSerializer):
             "remark",
             "form_permissions",
         )
+
+
+class WorkFlowNodeSimpleSerializer(serializers.ModelSerializer):
+    can_return = serializers.BooleanField(default=False, label="可退回")
+
+    class Meta:
+        model = OAWorkflowNode
+        exclude = ("oa_work_flow", "permissions", "form_permissions")

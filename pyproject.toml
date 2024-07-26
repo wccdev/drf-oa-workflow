@@ -39,6 +39,7 @@ requests = "^2.31.0"
 django = ">=3.2"
 djangorestframework = "^3.14.0"
 cx-oracle = "^8.3.0"
+django-filter = "^24.2"
 
 [tool.poetry.extras]
 test = [

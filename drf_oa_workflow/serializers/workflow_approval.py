@@ -15,13 +15,25 @@ class WorkFlowNodeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OAWorkflowNode
-        exclude = ("oa_workflow", "permissions")
+        exclude = ("oa_workflow",)
 
 
 class OAWorkflowSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = OAWorkflow
-        exclude = ("created_by", "updated_by")
+        fields = [
+            "id",
+            "code",
+            "name",
+            "workflow_id",
+            "workflow_type_id",
+            "workflow_form_id",
+            "workflow_main_table",
+            "is_active_version",
+            "workflow_version",
+            "file_category_id",
+            "remark",
+        ]
 
 
 class WorkflowApprovalSerializer(serializers.ModelSerializer):

@@ -17,9 +17,9 @@ class WorkFlowUserSerializer(serializers.ModelSerializer):
     )
     # TODO 系统用户所属部门
     sys_user_dept = serializers.CharField(read_only=True, default="", label="用户部门")
-    dingtalk_avatar = serializers.CharField(
-        source="staff_code.dingtalk_avatar", label="钉钉头像"
-    )
+    # dingtalk_avatar = serializers.CharField(
+    #     source="staff_code.dingtalk_avatar", label="钉钉头像"
+    # )
 
     @classmethod
     def process_queryset(cls, request, queryset):
@@ -36,5 +36,5 @@ class WorkFlowUserSerializer(serializers.ModelSerializer):
             "sys_user_name",
             "sys_user_code",
             "sys_user_dept",
-            "dingtalk_avatar",
+            # "dingtalk_avatar",
         )

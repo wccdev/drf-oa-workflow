@@ -131,7 +131,7 @@ class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
         return self._list(self.filter_queryset(queryset))
 
 
-class WorkFlowViewSet(
+class WorkflowApprovalViewSet(
     OaWFApiViewMixin, ListModelMixin, RetrieveModelMixin, CusGenericViewSet
 ):
     queryset = WorkflowApproval.objects.all()
@@ -233,7 +233,7 @@ class WorkFlowViewSet(
 
         wf_log = (
             WorkflowRequestLog.objects.filter(
-                REQUESTID_id=int(approval.workflow_request_id),
+                REQUESTID_id=approval.workflow_request_id,
                 NODEID_id=oa_node_id,
                 OPERATOR_id=request.user.oa_user_id,
                 # REMARK=data["remark"]  # 备注
@@ -397,7 +397,7 @@ class WorkFlowViewSet(
             WorkflowRequestLog.objects.select_related(
                 "NODEID", "OPERATOR", "OPERATOR__DEPARTMENTID"
             )
-            .filter(REQUESTID_id=int(workflow_request_id))
+            .filter(REQUESTID_id=workflow_request_id)
             .order_by("-LOGID")
         )
         page = self.paginate_queryset(queryset)
@@ -540,9 +540,7 @@ class WorkFlowViewSet(
 
         # SRM审批记录表事务
         # OA数据库SRM拓展表事务
-        approval = get_object_or_404(
-            self.queryset, workflow_request_id=str(oa_request_id)
-        )
+        approval = get_object_or_404(self.queryset, workflow_request_id=oa_request_id)
         with atomic(using="oa"), atomic():
             if status:
                 approval.content_object.approve()

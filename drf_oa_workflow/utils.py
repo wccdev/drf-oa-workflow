@@ -101,7 +101,12 @@ class OaApi:
         """
         if not api_settings.OA_SSO_TOKEN_APP_ID:
             raise ValueError(
-                f"使用此方法请先配置f'{SETTING_PREFIX}'.'OA_SSO_TOKEN_APP_ID'"
+                "使用此方法请先在django settings中配置变量:"
+                f"\n{SETTING_PREFIX} = {'{'}"
+                "\n    ..."
+                f'\n    "OA_SSO_TOKEN_APP_ID": "xxxxx",'
+                "\n    ..."
+                "\n}"
             )
         api_path = "/ssologin/getToken"
         headers = {"Content-Type": self.REQUEST_CONTENTTYPE}
@@ -561,23 +566,6 @@ class OaWorkflowApi(OaApi):
         for type_name, g in groupby(res, key=lambda x: x["workflowTypeName"]):
             result.append({"workflowTypeName": type_name, "workflows": list(g)})
         return result
-
-    def submit(self, post_data: dict, workflow_id: str = None):  # noqa: RUF013 PEP 484
-        """
-        创建流程
-        :param post_data:
-        :param workflow_id: Oa中的流程ID
-        # :param oa_detail_table: SCM单据ID
-        """
-        # workflow_id 51002 创建流程
-        # workflow_id 51003 编辑流程
-
-        # doc_id 单据ID
-
-        # 示例数据 api_example_data.SUBMIT_DATA_DEMO
-        api_path = "/api/workflow/paService/doCreateRequest"
-        res: dict = self._post_oa(api_path, post_data=post_data)
-        return res["data"]["requestid"]
 
     def submit_new(  # noqa: PLR0913
         self,

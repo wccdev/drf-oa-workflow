@@ -1,3 +1,4 @@
+from drfexts.viewsets import ExtGenericViewSet
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.mixins import UpdateModelMixin
@@ -10,19 +11,17 @@ from drf_oa_workflow.serializers import OAWorkflowConfSerializer
 from drf_oa_workflow.serializers import OAWorkflowNodeRetrieveSerializer
 from drf_oa_workflow.serializers import OAWorkflowNodeSerializer
 
-from .base import CusGenericViewSet
-
 __all__ = [
-    "OAWorkflowConfViewSet",
-    "OAWorkflowNodeViewSet",
+    "RegisterWorkflowViewSet",
+    "RegisterWorkflowNodeViewSet",
 ]
 
 
-class OAWorkflowConfViewSet(
+class RegisterWorkflowViewSet(
     ListModelMixin,
     UpdateModelMixin,
     RetrieveModelMixin,
-    CusGenericViewSet,
+    ExtGenericViewSet,
 ):
     queryset = OAWorkflow.objects.for_ordering().select_related("workflow_type")
     serializer_class = {
@@ -35,11 +34,11 @@ class OAWorkflowConfViewSet(
     ordering = ("workflow_type_id", "order")
 
 
-class OAWorkflowNodeViewSet(
+class RegisterWorkflowNodeViewSet(
     ListModelMixin,
     UpdateModelMixin,
     RetrieveModelMixin,
-    CusGenericViewSet,
+    ExtGenericViewSet,
 ):
     queryset = OAWorkflowNode.objects.all()
     serializer_class = {

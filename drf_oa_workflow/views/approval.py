@@ -55,8 +55,6 @@ from drf_oa_workflow.settings import SYSTEM_IDENTIFIER_KEY
 from drf_oa_workflow.utils import OaWorkflowApi
 from drf_oa_workflow.utils import get_sync_oa_user_model
 
-from .base import CusGenericViewSet
-
 User = get_user_model()
 OaUserModel: OaUserInfo = get_sync_oa_user_model()
 
@@ -132,7 +130,7 @@ class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
 
 
 class WorkflowApprovalViewSet(
-    OaWFApiViewMixin, ListModelMixin, RetrieveModelMixin, CusGenericViewSet
+    OaWFApiViewMixin, ListModelMixin, RetrieveModelMixin, ExtGenericViewSet
 ):
     queryset = WorkflowApproval.objects.all()
     serializer_class = {
@@ -151,9 +149,7 @@ class WorkflowApprovalViewSet(
 
     def get_valid_post_data(self):
         if self.action not in self.post_data_serializer_classes:
-            serializer_class = self.post_data_serializer_classes[
-                self.default_serializer_class_key
-            ]
+            serializer_class = self.post_data_serializer_classes[self._default_key]
         else:
             serializer_class = self.post_data_serializer_classes[self.action]
         serializer = serializer_class(data=self.request.data)

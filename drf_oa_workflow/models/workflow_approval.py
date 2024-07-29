@@ -72,10 +72,7 @@ class WorkflowApproval(BaseAuditModel):
         oa_wf = WorkflowRequestBase.objects.filter(
             REQUESTID=self.workflow_request_id
         ).first()
-        if oa_wf:
-            self.code = oa_wf.REQUESTMARK
-        else:
-            self.code = ""
+        self.code = oa_wf.REQUESTMARK if oa_wf else ""
         return self.code
 
     def record_operation(  # noqa: PLR0913

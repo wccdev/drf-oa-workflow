@@ -2,17 +2,17 @@ from rest_framework.routers import DefaultRouter
 
 from drf_oa_workflow.views.approval import WorkflowApprovalViewSet
 from drf_oa_workflow.views.approval import WorkflowsViewSet
-from drf_oa_workflow.views.workflow_register import OAWorkflowConfViewSet
-from drf_oa_workflow.views.workflow_register import OAWorkflowNodeViewSet
+from drf_oa_workflow.views.workflow_register import RegisterWorkflowNodeViewSet
+from drf_oa_workflow.views.workflow_register import RegisterWorkflowViewSet
 
 router = DefaultRouter()
 
 # 流程注册信息
-router.register("workflow-classes", OAWorkflowConfViewSet)
-router.register("workflow-classes-nodes", OAWorkflowNodeViewSet)
+router.register("register-workflows", RegisterWorkflowViewSet)
+router.register("register-workflows-nodes", RegisterWorkflowNodeViewSet)
 
 # 流程待办/已办
-router.register("workflow-list", WorkflowsViewSet)
+router.register("workflows", WorkflowsViewSet)
 # 流程审批等操作
 router.register("workflow-approvals", WorkflowApprovalViewSet)
 

@@ -9,6 +9,8 @@ from django.forms import fields as form_fields
 from django.http.response import HttpResponseRedirect
 
 from .models import OaUserInfo
+from .models import WorkflowApproval
+from .models import WorkflowApprovalOperation
 from .models import WorkflowBase
 from .models import WorkflowType
 from .models.workflow_register import OAWorkflow
@@ -365,3 +367,66 @@ class OAWorkflowAdmin(admin.ModelAdmin):
             extra_context = {"oa_workflows": result}
 
         return super().changelist_view(request, extra_context=extra_context)
+
+
+class ApprovalOperationInline(admin.TabularInline):
+    can_delete = False
+    model = WorkflowApprovalOperation
+    verbose_name = "流程操作记录"
+    verbose_name_plural = "流程操作记录"
+    ordering = ("-id",)
+    readonly_fields = (
+        "oa_node_id",
+        "operation_type",
+        "remark",
+        "created_by",
+        "created_at",
+    )
+    fields = ("created_by", "operation_type", "remark", "oa_node_id", "created_at")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("created_by")
+
+    def has_add_permission(self, *args, **kwargs):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    class Media:
+        css = {"all": ("css/hide_admin_original.css",)}
+
+
+@admin.register(WorkflowApproval)
+class WorkflowApprovalAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "code",
+        # "title",
+        "workflow",
+        "workflow_request_id",
+        "approval_status",
+        "created_by",
+        "created_at",
+        "archived_at",
+    )
+    search_fields = ("code", "workflow_request_id")
+    search_help_text = "查询流程编号或者OA流程实例ID"
+    list_select_related = ("workflow", "created_by")
+    ordering = ("-id",)
+    list_filter = ("workflow", "approval_status", "created_by")
+    inlines = [
+        ApprovalOperationInline,
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

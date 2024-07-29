@@ -46,11 +46,6 @@ class WorkflowApproval(BaseAuditModel):
 
     LOG_TYPE = {i[0]: i[1] for i in OAWorkflowLogTypes.choices}
 
-    # 以下3个属性含义参考 drf_oa_workflow.models.workflow_register.OAWorkflow
-    TERMINATE_COLUMN = OAWorkflow.TERMINATE_COLUMN
-    DEFAULT_MAIN_DATA = OAWorkflow.DEFAULT_MAIN_DATA
-    TERMINATE_MAIN_DATA = OAWorkflow.TERMINATE_MAIN_DATA
-
     class Meta:
         verbose_name = verbose_name_plural = "流程审核"
         db_table = "workflow_approval"

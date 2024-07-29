@@ -9,7 +9,7 @@ from drf_oa_workflow.models import WorkflowBase
 from drf_oa_workflow.models import WorkflowFlowNode
 from drf_oa_workflow.models import WorkflowNodeLink
 from drf_oa_workflow.models.base import BaseModel
-from drf_oa_workflow.utils import OaWorkFlow
+from drf_oa_workflow.utils import OaWorkflowApi
 
 __all__ = [
     "OAWorkflowType",
@@ -111,15 +111,6 @@ class OAWorkflow(BaseModel):
 
     def __str__(self):
         return f"{self.workflow_id}-{self.name}-版本{self.workflow_version}"
-
-    # 流程标准设计表单字段和值
-    # 所有流程表单都需要一个字段，是否终止, sfzz
-    TERMINATE_COLUMN = "sfzz"
-    # 创建流程默认主表数据
-    DEFAULT_MAIN_DATA = {TERMINATE_COLUMN: 0}
-
-    # 终止流程默认主表数据
-    TERMINATE_MAIN_DATA = {TERMINATE_COLUMN: 1}
 
     @classmethod
     def sync_other_versions(cls, oa_workflow_id: int | None = None) -> None:
@@ -251,7 +242,7 @@ class OAWorkflow(BaseModel):
         获取流程配置的流程图链接
         """
         # 需要OA高权限账号
-        return OaWorkFlow().get_workflow_chart_url(manager_uid, self.workflow_id)
+        return OaWorkflowApi().get_workflow_chart_url(manager_uid, self.workflow_id)
 
     @property
     def chart_url(self):

@@ -457,7 +457,7 @@ class OaApi:
         return xml_content
 
 
-class OaWorkFlow(OaApi):
+class OaWorkflowApi(OaApi):
     def get_todo_list(self, workflow_id, page, page_size, conditions=None):
         """
         待办流程

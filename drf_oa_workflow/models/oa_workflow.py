@@ -16,6 +16,7 @@ __all__ = [
     "WorkflowRequestBase",
     "WorkflowRequestLog",
     "WorkflowType",
+    "WorkflowRequestWccExtendInfo",
 ]
 
 
@@ -447,3 +448,37 @@ class WorkflowRequestBase(OADbBaseModel):
         managed = False
         db_table = 'ECOLOGY"."WORKFLOW_REQUESTBASE'
         verbose_name = verbose_name_plural = "OA流程信息"
+
+
+class WorkflowRequestWccExtendInfo(OADbBaseModel):
+    """
+    SRM业务需求指定拓展表
+    """
+
+    # ID = models.IntegerField(primary_key=True)
+    REQUESTID = models.OneToOneField(
+        WorkflowRequestBase,
+        models.DO_NOTHING,
+        db_column="REQUESTID",
+        to_field="REQUESTID",
+        related_name="extend_info",
+        verbose_name="所属流程信息",
+    )
+    APPROVAL_STATUS = models.SmallIntegerField(
+        choices=choices.ApprovalStatus,
+        default=choices.ApprovalStatus.PENDING,
+        verbose_name="审批状态",
+    )
+    DOC_STATUS = models.SmallIntegerField(
+        choices=choices.DocStatus,
+        default=choices.DocStatus.TO_VALID,
+        verbose_name="单据状态",
+    )
+    SOURCE = models.CharField(
+        max_length=100, blank=True, default="", verbose_name="来源系统"
+    )
+
+    class Meta:
+        managed = False
+        db_table = 'ECOLOGY"."WORKFLOW_REQUEST_WCCEXTENDINFO'
+        verbose_name = verbose_name_plural = "OA流程WCC自定义扩展信息"

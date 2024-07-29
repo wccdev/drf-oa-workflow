@@ -9,16 +9,19 @@ from string import digits
 from django.contrib.auth import get_user_model
 from django.db.models import F
 
-# from drf_oa_workflow.choices import ApprovalStatus
+from drf_oa_workflow.choices import ApprovalStatus
 from drf_oa_workflow.choices import OAFlowNodeType
 from drf_oa_workflow.choices import OAWorkflowLogTypes
 from drf_oa_workflow.choices import StatusChoice
 from drf_oa_workflow.choices import WFOperationTypes
+from drf_oa_workflow.contains import DEFAULT_MAIN_DATA
 from drf_oa_workflow.models import WorkflowCurrentOperator
 from drf_oa_workflow.models import WorkflowFlowNode
 from drf_oa_workflow.models import WorkflowRequestBase
 from drf_oa_workflow.models import WorkflowRequestLog
-from drf_oa_workflow.utils import OaWorkFlow as OAWorkFlowService
+from drf_oa_workflow.utils import OaWorkflowApi
+
+from .settings import api_settings
 
 User = get_user_model()
 
@@ -71,11 +74,11 @@ class WFService:
         """
         # from drf_oa_workflow.models import OAWorkflow
         from drf_oa_workflow.models import WorkflowApproval
-        # from srm.approvals.models.oa import WorkflowRequestWccExtendInfo
+        from drf_oa_workflow.models import WorkflowRequestWccExtendInfo
 
         # 提交的主表数据处理
         main_data = main_data or {}
-        # main_data.update(OAWorkflow.DEFAULT_MAIN_DATA)
+        main_data.update(DEFAULT_MAIN_DATA)
 
         # 提交人
         submitter = submitter or content_object.updated_by
@@ -83,7 +86,7 @@ class WFService:
         # 流程配置开启
         if wf_class.status == StatusChoice.VALID:
             # 提交到OA
-            wf_service = OAWorkFlowService()
+            wf_service = OaWorkflowApi()
             wf_service.register_user(submitter.oa_user_id)
 
             handled_data = [
@@ -125,12 +128,13 @@ class WFService:
         approval.record_operation(submitter, oa_node_id, submit_type, remark=remark)
 
         # 增加OA扩展表记录
-        # if oa_request_id != "0":
-        #     WorkflowRequestWccExtendInfo.objects.create(
-        #         REQUESTID_id=int(oa_request_id),
-        #         APPROVAL_STATUS=ApprovalStatus.PENDING,
-        #         DOC_STATUS=content_object.status,
-        #     )
+        if oa_request_id != "0":
+            WorkflowRequestWccExtendInfo.objects.create(
+                REQUESTID_id=int(oa_request_id),
+                APPROVAL_STATUS=ApprovalStatus.PENDING,
+                DOC_STATUS=content_object.status,
+                SOURCE=api_settings.SYSTEM_IDENTIFIER,
+            )
         return approval
 
     @classmethod
@@ -170,7 +174,7 @@ class WFService:
 
     @classmethod
     def get_oa_workflow_form_buttons(
-        cls, oa_api_server: OAWorkFlowService, approval: WorkflowApproval, oa_node_id
+        cls, oa_api_server: OaWorkflowApi, approval: WorkflowApproval, oa_node_id
     ):
         """
         从OA获取当前用户当前流程的可操作的按钮组
@@ -290,7 +294,7 @@ class WFService:
         :param current_user: 获取当前流程信息的用户
         """
         # 获取OA中的流程信息
-        workflow = OAWorkFlowService()
+        workflow = OaWorkflowApi()
         workflow.register_user(current_user.oa_user_id)
 
         # OA中的流程用户

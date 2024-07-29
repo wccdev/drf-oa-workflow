@@ -17,6 +17,7 @@ __all__ = [
     "OAWorkflowEdge",
     "WorkflowApproval",
     "WorkflowApprovalOperation",
+    "WorkflowRequestWccExtendInfo",
 ]
 
 from .oa_hrmresource import HRMDepartment
@@ -28,6 +29,7 @@ from .oa_workflow import WorkflowNodeBase
 from .oa_workflow import WorkflowNodeLink
 from .oa_workflow import WorkflowRequestBase
 from .oa_workflow import WorkflowRequestLog
+from .oa_workflow import WorkflowRequestWccExtendInfo
 from .oa_workflow import WorkflowType
 from .user import AbstractOaUserInfo
 from .user import OaUserInfo

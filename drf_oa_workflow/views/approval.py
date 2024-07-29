@@ -22,6 +22,9 @@ from rest_framework.response import Response
 from drf_oa_workflow.choices import ApprovalStatus
 from drf_oa_workflow.choices import TransmitTypes
 from drf_oa_workflow.choices import WFOperationTypes
+from drf_oa_workflow.contains import DEFAULT_MAIN_DATA
+from drf_oa_workflow.contains import TERMINATE_COLUMN
+from drf_oa_workflow.contains import TERMINATE_MAIN_DATA
 from drf_oa_workflow.mixin import OaWFApiViewMixin
 from drf_oa_workflow.models import OaUserInfo
 from drf_oa_workflow.models import OAWorkflow
@@ -29,6 +32,7 @@ from drf_oa_workflow.models import OAWorkflowNode
 from drf_oa_workflow.models import WorkflowApproval
 from drf_oa_workflow.models import WorkflowRequestBase
 from drf_oa_workflow.models import WorkflowRequestLog
+from drf_oa_workflow.models import WorkflowRequestWccExtendInfo
 from drf_oa_workflow.serializers.extend_schema import WorkflowBaseSubmitSerializer
 from drf_oa_workflow.serializers.extend_schema import WorkflowRejectSerializer
 from drf_oa_workflow.serializers.extend_schema import WorkflowReviewDispatchSerializer
@@ -47,7 +51,8 @@ from drf_oa_workflow.serializers.workflow_approval import WFApprovalSerializer
 from drf_oa_workflow.serializers.workflow_register import OAWorkflowNodeSerializer
 from drf_oa_workflow.serializers.workflow_register import WorkFlowNodeSimpleSerializer
 from drf_oa_workflow.service import WFService
-from drf_oa_workflow.utils import OaWorkFlow as OAWorkflowService
+from drf_oa_workflow.settings import SYSTEM_IDENTIFIER_KEY
+from drf_oa_workflow.utils import OaWorkflowApi
 from drf_oa_workflow.utils import get_sync_oa_user_model
 
 from .base import CusGenericViewSet
@@ -66,7 +71,9 @@ def filter_workflow(qs, name, value):
 
 
 class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
-    queryset = WorkflowRequestBase.objects.all()
+    queryset = WorkflowRequestBase.objects.filter(
+        extend_info__SOURCE=settings.DRF_OA_WORKFLOW[SYSTEM_IDENTIFIER_KEY]
+    ).all()
     serializer_class = TodoHandledListSerializer
     ordering = ("-lastOperateTime",)
 
@@ -86,13 +93,6 @@ class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
         workflow_ids = list(OAWorkflow.objects.values_list("workflow_id", flat=True))
 
         return oa_user_id, workflow_ids
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .select_related("CREATER", "LASTOPERATOR", "CURRENTNODEID", "WORKFLOWID")
-        )
 
     def _list(self, queryset):
         page = self.paginate_queryset(queryset)
@@ -171,7 +171,7 @@ class WorkFlowViewSet(
         oa_node_id = data.pop("oa_node_id")
         operation_type = data.pop("review_type")
         post_data: dict = data.pop("post_data", {}) or {}
-        post_data.update(WorkflowApproval.DEFAULT_MAIN_DATA)
+        post_data.update(DEFAULT_MAIN_DATA)
         post_oa_data = json.dumps(
             [
                 {"fieldName": oa_field, "fieldValue": field_value}
@@ -223,8 +223,7 @@ class WorkFlowViewSet(
         # OA流程终止节点需要 流程配置遵循main_data数据内容
 
         main_data = [
-            {"fieldName": k, "fieldValue": v}
-            for k, v in approval.TERMINATE_MAIN_DATA.items()
+            {"fieldName": k, "fieldValue": v} for k, v in TERMINATE_MAIN_DATA.items()
         ]
         extras = {"mainData": json.dumps(main_data), "detailData": ""}
         workflow = request.oa_wf_api
@@ -495,7 +494,7 @@ class WorkFlowViewSet(
         需要高权限级别的OA账号, 测试账号 A0009527
         """
         # TODO 对request.user的权限判断
-        workflow = OAWorkflowService()
+        workflow = OaWorkflowApi()
         oa_user = OaUserInfo.objects.get(
             staff_code_id=settings.OA_WORKFLOW_MANAGER_CODE
         )
@@ -534,8 +533,8 @@ class WorkFlowViewSet(
         sign = request.headers.get("Apisign", "")
         if sign != hashlib.md5(str(oa_request_id).encode()).hexdigest().upper():  # noqa: S324
             raise APIException("ApiSign错误")
-        if WorkflowApproval.TERMINATE_COLUMN in data:
-            status = not int(data[WorkflowApproval.TERMINATE_COLUMN] or 0)
+        if TERMINATE_COLUMN in data:
+            status = not int(data[TERMINATE_COLUMN] or 0)
         else:
             status = data["status"]
 
@@ -554,13 +553,13 @@ class WorkFlowViewSet(
             approval.approval_status = approval_status
             approval.archive()
 
-            # oa_extend = get_object_or_404(
-            #     WorkflowRequestWccExtendInfo.objects.all(),
-            #     REQUESTID_id=int(oa_request_id)
-            # )
-            # oa_extend.APPROVAL_STATUS = approval_status
-            # oa_extend.DOC_STATUS = approval.content_object.status
-            # oa_extend.save()
+            oa_extend = get_object_or_404(
+                WorkflowRequestWccExtendInfo.objects.all(),
+                REQUESTID_id=int(oa_request_id),
+            )
+            oa_extend.APPROVAL_STATUS = approval_status
+            oa_extend.DOC_STATUS = approval.content_object.status
+            oa_extend.save()
 
         return Response()
 

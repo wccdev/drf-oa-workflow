@@ -5,12 +5,15 @@ from itertools import groupby
 
 from rest_framework import serializers
 
+from drf_oa_workflow.choices import ApprovalStatus
+from drf_oa_workflow.choices import DocStatus
 from drf_oa_workflow.choices import WFOperationTypes
 from drf_oa_workflow.models import WorkflowApprovalOperation
 from drf_oa_workflow.models import WorkflowBase
 from drf_oa_workflow.models import WorkflowCurrentOperator
 from drf_oa_workflow.models import WorkflowRequestBase
 from drf_oa_workflow.models import WorkflowRequestLog
+from drf_oa_workflow.service import WFService
 
 
 class WorkflowBaseSerializer(serializers.ModelSerializer):
@@ -59,8 +62,21 @@ class WFListSerializer(serializers.ListSerializer):
 
         return datas
 
+    @classmethod
+    def match_doc_data(cls, datas: list[dict | WorkflowRequestBase]):
+        prepare_datas_map = WFService.get_workflow_info_map(
+            [i.REQUESTID for i in datas]
+        )
+
+        for i in datas:
+            i.workflowDoc = prepare_datas_map.get(str(i.REQUESTID), {})
+
+        return datas
+
     def to_representation(self, data):
-        return super().to_representation(self.match_un_operators(data))
+        data = self.match_un_operators(data)
+        data = self.match_doc_data(data)
+        return super().to_representation(data)
 
 
 class TodoHandledListSerializer(serializers.ModelSerializer):
@@ -109,19 +125,19 @@ class TodoHandledListSerializer(serializers.ModelSerializer):
     nodeid = serializers.IntegerField(source="C_NODEID", read_only=True, label="节点ID")
     # workflowId = serializers.IntegerField(source="WORKFLOWID_id", read_only=True)
     unOperators = serializers.CharField(default="", read_only=True, label="未操作者")
-    # approval_status = serializers.ChoiceField(
-    #     source="extend_info.APPROVAL_STATUS",
-    #     choices=ApprovalStatus.choices,
-    #     label="审批状态",
-    # )
-    # doc_status = serializers.ChoiceField(
-    #     source="extend_info.DOC_STATUS", choices=DocStatus.choices, label="单据状态"
-    # )
+    approval_status = serializers.ChoiceField(
+        source="extend_info.APPROVAL_STATUS",
+        choices=ApprovalStatus.choices,
+        label="审批状态",
+    )
+    doc_status = serializers.ChoiceField(
+        source="extend_info.DOC_STATUS", choices=DocStatus.choices, label="单据状态"
+    )
 
     workflowBaseInfo = WorkflowBaseSerializer(
         source="WORKFLOWID", default=None, read_only=True
     )
-    workflowConf = serializers.DictField(default=None, read_only=True)
+    workflowDoc = serializers.DictField(default=None, read_only=True)
 
     @classmethod
     def process_queryset(cls, request, queryset):
@@ -129,7 +145,8 @@ class TodoHandledListSerializer(serializers.ModelSerializer):
             "CREATER",
             "LASTOPERATOR",
             "CURRENTNODEID",
-            "WORKFLOWID",  # "extend_info"
+            "WORKFLOWID",
+            "extend_info",
         ).distinct()
 
     class Meta:
@@ -156,10 +173,10 @@ class TodoHandledListSerializer(serializers.ModelSerializer):
             "nodeid",
             # "workflowId",
             "unOperators",
-            # "approval_status",
-            # "doc_status",
+            "approval_status",
+            "doc_status",
             "workflowBaseInfo",
-            "workflowConf",
+            "workflowDoc",
         )
         list_serializer_class = WFListSerializer
 

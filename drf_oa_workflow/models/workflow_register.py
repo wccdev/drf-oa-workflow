@@ -104,7 +104,7 @@ class OAWorkflow(BaseModel):
     remark = models.TextField("备注", max_length=500, blank=True, default="")
 
     form_permissions = models.JSONField(
-        verbose_name="节点表单权限", null=True, blank=True, default={}
+        verbose_name="节点表单权限", null=True, blank=True, default=dict
     )
 
     objects = WorkflowManager()
@@ -314,7 +314,7 @@ class OAWorkflowNode(BaseModel):
         choices=ONE_ZERO_CHOICES,
     )
     form_permissions = models.JSONField(
-        verbose_name="节点表单权限", null=True, blank=True, default={}
+        verbose_name="节点表单权限", null=True, blank=True, default=dict
     )
 
     def __str__(self):

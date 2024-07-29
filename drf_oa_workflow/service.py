@@ -9,7 +9,7 @@ from string import digits
 from django.contrib.auth import get_user_model
 from django.db.models import F
 
-from drf_oa_workflow.choices import ApprovalStatus
+# from drf_oa_workflow.choices import ApprovalStatus
 from drf_oa_workflow.choices import OAFlowNodeType
 from drf_oa_workflow.choices import OAWorkflowLogTypes
 from drf_oa_workflow.choices import StatusChoice
@@ -69,13 +69,13 @@ class WFService:
         :param remark:             备注、批注
         :param submitter:          流程提交人
         """
-        from drf_oa_workflow.models import OAWorkflow
+        # from drf_oa_workflow.models import OAWorkflow
         from drf_oa_workflow.models import WorkflowApproval
-        from srm.approvals.models.oa import WorkflowRequestWccExtendInfo
+        # from srm.approvals.models.oa import WorkflowRequestWccExtendInfo
 
         # 提交的主表数据处理
         main_data = main_data or {}
-        main_data.update(OAWorkflow.DEFAULT_MAIN_DATA)
+        # main_data.update(OAWorkflow.DEFAULT_MAIN_DATA)
 
         # 提交人
         submitter = submitter or content_object.updated_by
@@ -125,12 +125,12 @@ class WFService:
         approval.record_operation(submitter, oa_node_id, submit_type, remark=remark)
 
         # 增加OA扩展表记录
-        if oa_request_id != "0":
-            WorkflowRequestWccExtendInfo.objects.create(
-                REQUESTID_id=int(oa_request_id),
-                APPROVAL_STATUS=ApprovalStatus.PENDING,
-                DOC_STATUS=content_object.status,
-            )
+        # if oa_request_id != "0":
+        #     WorkflowRequestWccExtendInfo.objects.create(
+        #         REQUESTID_id=int(oa_request_id),
+        #         APPROVAL_STATUS=ApprovalStatus.PENDING,
+        #         DOC_STATUS=content_object.status,
+        #     )
         return approval
 
     @classmethod

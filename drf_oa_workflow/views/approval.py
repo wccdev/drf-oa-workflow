@@ -3,6 +3,7 @@ import hashlib
 import json
 import re
 
+import django_filters
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -10,13 +11,13 @@ from django.db.transaction import atomic
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
 from drf_spectacular.utils import extend_schema
+from drfexts.viewsets import ExtGenericViewSet
 from rest_framework.decorators import action
 from rest_framework.exceptions import APIException
 from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin
 from rest_framework.mixins import RetrieveModelMixin
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
 
 from drf_oa_workflow.choices import ApprovalStatus
 from drf_oa_workflow.choices import TransmitTypes
@@ -64,14 +65,16 @@ def filter_workflow(qs, name, value):
     return qs.filter(WORKFLOWID_id__in=ids)
 
 
-class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, GenericViewSet):
+class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
     queryset = WorkflowRequestBase.objects.all()
     serializer_class = TodoHandledListSerializer
     ordering = ("-lastOperateTime",)
 
-    # filterset_fields = {
-    #     "workflowBaseInfo.workflowId": django_filters.NumberFilter(method=filter_workflow),  # noqa: E501
-    # }
+    filterset_fields_overwrite = {
+        "workflowBaseInfo.workflowId": django_filters.NumberFilter(
+            method=filter_workflow
+        ),
+    }
     search_fields = ["REQUESTMARK", "REQUESTNAME", "WORKFLOWID__WORKFLOWNAME"]
 
     @classmethod

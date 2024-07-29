@@ -10,7 +10,10 @@ OA_DATABASE_ALIAS = "oa"
 
 DEFAULT_SYNC_OA_USER_MODEL = "drf_oa_workflow.OaUserInfo"
 
+SYSTEM_IDENTIFIER_KEY = "SYSTEM_IDENTIFIER"
+
 DEFAULTS = {
+    SYSTEM_IDENTIFIER_KEY: "",
     # Django settings中OA数据库连接的别名
     "OA_DATABASE_ALIAS": OA_DATABASE_ALIAS,
     # OA开放接口

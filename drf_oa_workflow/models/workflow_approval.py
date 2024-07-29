@@ -96,6 +96,7 @@ class WorkflowApproval(BaseAuditModel):
         """
         WorkflowApprovalOperation.objects.create(
             created_by=operator,
+            updated_by=operator,
             approval=self,
             oa_node_id=oa_node_id,
             operation_type=operation_type,

@@ -48,11 +48,7 @@ from drf_oa_workflow.serializers.post_data_valid import WFTransmitDataSerializer
 from drf_oa_workflow.serializers.user import WorkFlowUserSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalDetailSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalSerializer
-from drf_oa_workflow.serializers.workflow_register import (
-    RegisterWorkflowNodeExtSerializer,
-)
 from drf_oa_workflow.serializers.workflow_register import RegisterWorkflowNodeSerializer
-from drf_oa_workflow.service import WFService
 from drf_oa_workflow.settings import SYSTEM_IDENTIFIER_KEY
 from drf_oa_workflow.utils import OaWorkflowApi
 from drf_oa_workflow.utils import get_sync_oa_user_model
@@ -435,57 +431,6 @@ class WorkflowApprovalViewSet(
         res = wf_service.get_chart_url(workflow_request_id, request.user.username)
         result = {"host": settings.DRF_OA_WORKFLOW["OA_HOST"], **res["data"]}
         return Response(result)
-
-    def retrieve(self, request, *args, **kwargs):
-        """
-        流程详细
-        """
-        # 流程记录
-        instance = self.get_object()
-        serializer = self.get_serializer(instance)
-        result = serializer.data
-        return Response(result)
-
-    @action(detail=True, url_path="get-workflow-info")
-    def get_workflow_info(self, request, workflow_request_id, *args, **kwargs):
-        """
-        获取流程的操作按钮、节点等信息
-        """
-        approval = get_object_or_404(
-            self.queryset.select_related("register_workflow"),
-            workflow_request_id=workflow_request_id,
-        )
-
-        # 流程操作按钮
-        can_edit, current_node_id, handled_detail = WFService.get_oa_workflow_info(
-            approval, request.user
-        )
-
-        # 流程节点
-        node_serializer = RegisterWorkflowNodeExtSerializer(
-            approval.register_workflow.flow_nodes.all(), many=True
-        )
-        nodes = node_serializer.data
-        wf_passed_nodes = []
-        if handled_detail["buttons"]["return"]:
-            wf_passed_nodes = WFService.get_oa_wf_passed_nodes(
-                approval.workflow_request_id
-            )
-            passed_nodes = WFService.can_return_oa_nodes(
-                approval, current_node_id, wf_passed_nodes
-            )
-            for i in nodes:
-                if i["node_id"] in passed_nodes:
-                    i["can_return"] = True
-
-        res = {
-            "can_edit": can_edit,
-            "current_node_id": current_node_id,
-            "wf_passed_nodes": wf_passed_nodes,
-            "oa_workflow_detail": handled_detail,
-            "workflow_nodes": nodes,
-        }
-        return Response(res)
 
     @action(detail=False, url_path=r"get-wf-chart-xml/(?P<wf_id>\d+)")
     def oa_workflow_chat_xml(self, request, wf_id, *args, **kwargs):

@@ -144,17 +144,15 @@ class WFService:
         :param oa_request_ids: OA流程requestId[]
         """
         from drf_oa_workflow.models import Approval
-        from drf_oa_workflow.serializers.workflow_approval import (
-            WFListApprovalSerializer,
-        )
+        from drf_oa_workflow.serializers.workflow_approval import WFApprovalSerializer
 
         approvals = Approval.objects.filter(workflow_request_id__in=oa_request_ids)
-        approvals = WFListApprovalSerializer.process_queryset(None, approvals)
-        prepare_datas = WFListApprovalSerializer(approvals, many=True).data
+        approvals = WFApprovalSerializer.process_queryset(None, approvals)
+        prepare_datas = WFApprovalSerializer(approvals, many=True).data
 
         prepare_datas_map = {}
         for i in prepare_datas:
-            prepare_datas_map[i["oa_request_id"]] = i
+            prepare_datas_map[i["workflow_request_id"]] = i
         return prepare_datas_map
 
     @classmethod
@@ -234,7 +232,8 @@ class WFService:
         oa_buttons = right_menu_data.get("rightMenus", [])
         try:
             oa_wf_node = WorkflowFlowNode.objects.select_related("NODEID").get(
-                WORKFLOWID_id=approval.workflow.workflow_id, NODEID_id=oa_node_id
+                WORKFLOWID_id=approval.register_workflow.workflow_id,
+                NODEID_id=oa_node_id,
             )
         except WorkflowFlowNode.DoesNotExist:
             oa_wf_node = None
@@ -271,7 +270,7 @@ class WFService:
         # FIXME 流程终止归档判断, 需要固定终止归档节点的名称
         if handled_buttons["review"]:
             can_terminate = False
-            for edge in approval.workflow.flow_node_relations.all():
+            for edge in approval.register_workflow.flow_node_relations.all():
                 if edge.from_node_id != oa_node_id:
                     continue
                 if edge.to_node_name not in ["终止归档", "作废归档"]:
@@ -388,7 +387,7 @@ class WFService:
 
         # 流程每个节点的前置节点信息
         pre_nodes_map = {}
-        for r in approval.workflow.flow_node_relations.all():
+        for r in approval.register_workflow.flow_node_relations.all():
             pre_nodes_map.setdefault(r.to_node_id, [])
             pre_nodes_map[r.to_node_id].append(r.from_node_id)
 

@@ -5,9 +5,10 @@ from drf_oa_workflow.models import Approval
 from drf_oa_workflow.models import RegisterWorkflow
 from drf_oa_workflow.models import RegisterWorkflowEdge
 from drf_oa_workflow.models import RegisterWorkflowNode
+from drf_oa_workflow.service import WFService
 from drf_oa_workflow.utils import get_sync_oa_user_model
 
-from .workflow_register import RegisterWorkflowNodeSerializer
+from .workflow_register import RegisterWorkflowNodeExtSerializer
 
 OAUserModel = get_sync_oa_user_model()
 
@@ -53,84 +54,54 @@ class WorkflowApprovalSerializer(serializers.ModelSerializer):
         ]
 
 
-class WFListApprovalSerializer(serializers.ModelSerializer):
-    code = serializers.CharField(help_text="流程编号(废弃)")
-    title = serializers.CharField(help_text="流程标题(废弃)")
-    workflow_code = serializers.CharField(
-        source="register_workflow.code", help_text="流程类型编号"
-    )
-    workflow_name = serializers.CharField(
-        source="register_workflow.name", help_text="流程类型名称"
-    )
-    oa_request_id = serializers.CharField(
-        source="workflow_request_id", help_text="OA流程RequestID"
-    )
-    register_workflow_id = serializers.IntegerField(
-        source="register_workflow.workflow_id", label="OA流程类型ID"
-    )
-    workflow_main_table = serializers.CharField(
-        source="register_workflow.workflow_main_table", help_text="OA流程主表"
-    )
-    workflow_detail_tables = serializers.ListField(
-        source="register_workflow.workflow_detail_tables",
-        child=serializers.CharField(),
-        help_text="OA流程子表",
-    )
-    file_category_id = serializers.IntegerField(
-        source="register_workflow.file_category_id", help_text="OA流程文件目录ID"
-    )
-    data_type = serializers.SerializerMethodField(help_text="本系统数据类型")
-    data_id = serializers.CharField(source="object_id", help_text="本系统数据ID")
+class WFApprovalSerializer(serializers.ModelSerializer):
+    data_type = serializers.SerializerMethodField(help_text="本系统单据")
+    data_id = serializers.IntegerField(source="object_id", help_text="本系统单据ID")
 
     @classmethod
-    def process_queryset(cls, request, queryset):
-        return queryset.select_related("register_workflow", "content_type")
-
-    def get_data_type(self, instance):
+    def get_data_type(cls, instance):
         return f"{instance.content_type.app_label}.{instance.content_type.model}"
 
-    class Meta:
-        model = Approval
-        fields = (
-            "code",
-            "title",
-            "workflow_code",
-            "workflow_name",
-            "oa_request_id",
-            "register_workflow_id",
-            "workflow_main_table",
-            "workflow_detail_tables",
-            "file_category_id",
-            "data_type",
-            "data_id",
-            "approval_status",
-            "front_form_info",
-        )
-
-
-class WFApprovalSerializer(serializers.ModelSerializer):
-    register_workflow = OAWorkflowSimpleSerializer(read_only=True, label="流程信息")
-
     @classmethod
     def process_queryset(cls, request, queryset):
-        return queryset.select_related(
-            "register_workflow", "content_type", "created_by", "updated_by"
-        )
+        return queryset.select_related("content_type")
 
     class Meta:
         model = Approval
-        fields = "__all__"
+        fields = [
+            "id",
+            "data_type",
+            "data_id",
+            "workflow_request_id",
+            "approval_status",
+            "action",
+            "created_at",
+            "updated_at",
+            "archived_at",
+            "front_form_info",
+        ]
 
 
 class WFApprovalDetailSerializer(WFApprovalSerializer):
-    register_workflow_nodes = RegisterWorkflowNodeSerializer(
+    register_workflow = OAWorkflowSimpleSerializer(read_only=True, label="流程信息")
+    workflow_nodes = RegisterWorkflowNodeExtSerializer(
         source="register_workflow.flow_nodes", many=True, read_only=True
     )
+    can_edit = serializers.BooleanField(
+        default=False, read_only=True, label="是否可编辑"
+    )
+    current_node_id = serializers.IntegerField(
+        default=None, read_only=True, label="当前节点ID"
+    )
+    oa_workflow_detail = serializers.DictField(
+        default={}, read_only=True, label="OA流程信息"
+    )
+    passed_nodes = serializers.ListField(default=[], read_only=True, label="已经过节点")
 
     @classmethod
     def process_queryset(cls, request, queryset):
         return queryset.select_related(
-            "register_workflow", "created_by"
+            "content_type", "register_workflow"
         ).prefetch_related(
             Prefetch(
                 "register_workflow__flow_node_relations",
@@ -144,6 +115,53 @@ class WFApprovalDetailSerializer(WFApprovalSerializer):
             ),
         )
 
+    def to_representation(self, instance):
+        result = super().to_representation(instance)
+        # 获取流程信息
+        # 是否可编辑、当前节点等
+        can_edit, current_node_id, handled_detail = WFService.get_oa_workflow_info(
+            instance, self.context["request"].user
+        )
+
+        # 设置可退回节点
+        wf_passed_nodes = []
+        if handled_detail["buttons"]["return"]:
+            wf_passed_nodes = WFService.get_oa_wf_passed_nodes(
+                instance.workflow_request_id
+            )
+            passed_nodes = WFService.can_return_oa_nodes(
+                instance, current_node_id, wf_passed_nodes
+            )
+            for i in result["workflow_nodes"]:
+                if i["node_id"] in passed_nodes:
+                    i["can_return"] = True
+        result.update(
+            {
+                "can_edit": can_edit,
+                "current_node_id": current_node_id,
+                "passed_nodes": wf_passed_nodes,
+                "oa_workflow_detail": handled_detail,
+            }
+        )
+        return result
+
     class Meta:
         model = Approval
-        exclude = ("content_type", "object_id", "updated_by")
+        fields = [
+            "id",
+            "data_type",
+            "data_id",
+            "register_workflow",
+            "workflow_nodes",
+            "can_edit",
+            "current_node_id",
+            "oa_workflow_detail",
+            "passed_nodes",
+            "workflow_request_id",
+            "approval_status",
+            "action",
+            "created_at",
+            "updated_at",
+            "archived_at",
+            "front_form_info",
+        ]

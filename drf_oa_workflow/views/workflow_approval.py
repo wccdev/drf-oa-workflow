@@ -48,7 +48,11 @@ from drf_oa_workflow.serializers.post_data_valid import WFTransmitDataSerializer
 from drf_oa_workflow.serializers.user import WorkFlowUserSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalDetailSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalSerializer
+from drf_oa_workflow.serializers.workflow_register import (
+    RegisterWorkflowNodeExtSerializer,
+)
 from drf_oa_workflow.serializers.workflow_register import RegisterWorkflowNodeSerializer
+from drf_oa_workflow.service import WFService
 from drf_oa_workflow.settings import SYSTEM_IDENTIFIER_KEY
 from drf_oa_workflow.utils import OaWorkflowApi
 from drf_oa_workflow.utils import get_sync_oa_user_model
@@ -127,6 +131,47 @@ class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
         else:
             queryset = self.get_queryset().handled(oa_user_id, workflow_ids)
         return self._list(self.filter_queryset(queryset))
+
+    @action(detail=True)
+    def info(self, request, pk, *args, **kwargs):
+        """
+        流程对于当前用户可操作操作按钮、节点等信息
+        """
+        approval = Approval.objects.select_related("register_workflow").get(
+            workflow_request_id=pk
+        )
+
+        node_serializer = RegisterWorkflowNodeExtSerializer(
+            approval.register_workflow.flow_nodes.all(), many=True
+        )
+        node_list = node_serializer.data
+
+        # 获取流程信息
+        # 是否可编辑、当前节点等
+        can_edit, current_node_id, handled_detail = WFService.get_oa_workflow_info(
+            approval, request.user
+        )
+
+        # 设置可退回节点
+        wf_passed_nodes = []
+        if handled_detail["buttons"]["return"]:
+            wf_passed_nodes = WFService.get_oa_wf_passed_nodes(
+                approval.workflow_request_id
+            )
+            passed_nodes = WFService.can_return_oa_nodes(
+                approval, current_node_id, wf_passed_nodes
+            )
+            for i in node_list:
+                if i["node_id"] in passed_nodes:
+                    i["can_return"] = True
+        result = {
+            "can_edit": can_edit,
+            "current_node_id": current_node_id,
+            "passed_nodes": wf_passed_nodes,
+            "oa_workflow_detail": handled_detail,
+            "workflow_nodes": node_list,
+        }
+        return Response(result)
 
 
 class WorkflowApprovalViewSet(

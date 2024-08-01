@@ -1,13 +1,11 @@
 __all__ = [
-    "OAWorkflowConfRetrieveSerializer",
-    "OAWorkflowConfSaveSerializer",
-    "OAWorkflowConfSerializer",
-    "OAWorkflowNodeRetrieveSerializer",
-    "OAWorkflowNodeSerializer",
+    "RegisterWorkflowNodeSerializer",
+    "RegisterWorkflowRetrieveSerializer",
+    "RegisterWorkflowSaveSerializer",
+    "RegisterWorkflowSerializer",
 ]
 
-from .workflow_register import OAWorkflowConfRetrieveSerializer
-from .workflow_register import OAWorkflowConfSaveSerializer
-from .workflow_register import OAWorkflowConfSerializer
-from .workflow_register import OAWorkflowNodeRetrieveSerializer
-from .workflow_register import OAWorkflowNodeSerializer
+from .workflow_register import RegisterWorkflowNodeSerializer
+from .workflow_register import RegisterWorkflowRetrieveSerializer
+from .workflow_register import RegisterWorkflowSaveSerializer
+from .workflow_register import RegisterWorkflowSerializer

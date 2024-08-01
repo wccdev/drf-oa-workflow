@@ -5,6 +5,7 @@ from django.db.models import F
 from django.db.models import Q
 
 from drf_oa_workflow import choices
+from drf_oa_workflow.apps import OaWorkflowApiConfig
 from drf_oa_workflow.models import WorkflowBase
 from drf_oa_workflow.models import WorkflowFlowNode
 from drf_oa_workflow.models import WorkflowNodeLink
@@ -12,10 +13,10 @@ from drf_oa_workflow.models.base import BaseModel
 from drf_oa_workflow.utils import OaWorkflowApi
 
 __all__ = [
-    "OAWorkflowType",
-    "OAWorkflow",
-    "OAWorkflowNode",
-    "OAWorkflowEdge",
+    "RegisterWorkflowType",
+    "RegisterWorkflow",
+    "RegisterWorkflowNode",
+    "RegisterWorkflowEdge",
 ]
 
 
@@ -36,11 +37,11 @@ class WorkflowManager(models.Manager):
     def for_ordering(self):
         return self.get_queryset().for_ordering()
 
-    def get_by_code(self, code) -> OAWorkflow:
+    def get_by_code(self, code) -> RegisterWorkflow:
         """
         通过流程code获取流程类
         """
-        obj: OAWorkflow = (
+        obj: RegisterWorkflow = (
             self.get_queryset().select_related("active_version").get(code=code)
         )
         if not obj.active_version_id or obj.active_version_id == obj.workflow_id:
@@ -48,7 +49,7 @@ class WorkflowManager(models.Manager):
         return obj.active_version
 
 
-class OAWorkflowType(BaseModel):
+class RegisterWorkflowType(BaseModel):
     workflow_type_id = models.IntegerField("OA流程目录ID", unique=True)
     workflow_type_name = models.CharField("OA流程目录", max_length=500)
     desc = models.CharField("描述", max_length=500, blank=True, default="")
@@ -60,10 +61,10 @@ class OAWorkflowType(BaseModel):
 
     class Meta:
         verbose_name = verbose_name_plural = "流程目录注册"
-        db_table = "oa_workflow_type"
+        db_table = f"{OaWorkflowApiConfig.name}_register_workflow_type"
 
 
-class OAWorkflow(BaseModel):
+class RegisterWorkflow(BaseModel):
     """
     OA流程注册
     """
@@ -72,7 +73,7 @@ class OAWorkflow(BaseModel):
     name = models.CharField("流程名称", max_length=128)
     workflow_id = models.IntegerField("OA流程ID", unique=True)
     workflow_type = models.ForeignKey(
-        to=OAWorkflowType,
+        to=RegisterWorkflowType,
         on_delete=models.DO_NOTHING,
         to_field="workflow_type_id",
         verbose_name="OA流程所属目录",
@@ -87,7 +88,7 @@ class OAWorkflow(BaseModel):
     file_category_id = models.IntegerField("OA流程附件目录ID", null=True)
     parent = models.ForeignKey(
         to="self",
-        on_delete=models.DO_NOTHING,
+        on_delete=models.PROTECT,
         to_field="workflow_id",
         null=True,
         verbose_name="父级",
@@ -113,15 +114,15 @@ class OAWorkflow(BaseModel):
         return f"{self.workflow_id}-{self.name}-版本{self.workflow_version}"
 
     @classmethod
-    def sync_other_versions(cls, oa_workflow_id: int | None = None) -> None:
+    def sync_other_versions(cls, register_workflow_id: int | None = None) -> None:
         """
         同步流程在OA中的其他版本
         """
 
-        if oa_workflow_id:
-            oa_workflow_ids = [oa_workflow_id]
+        if register_workflow_id:
+            register_workflow_ids = [register_workflow_id]
         else:
-            oa_workflow_ids = list(
+            register_workflow_ids = list(
                 cls.objects.filter(workflow_version=1).values_list(
                     "workflow_id", flat=True
                 )
@@ -131,7 +132,10 @@ class OAWorkflow(BaseModel):
             WorkflowBase.objects.annotate(
                 workflow_type_name=F("WORKFLOWTYPE__TYPENAME")
             )
-            .filter(Q(ID__in=oa_workflow_ids) | Q(TEMPLATEID__in=oa_workflow_ids))
+            .filter(
+                Q(ID__in=register_workflow_ids)
+                | Q(TEMPLATEID__in=register_workflow_ids)
+            )
             .exclude(ISTEMPLATE="1")
         )
 
@@ -179,7 +183,7 @@ class OAWorkflow(BaseModel):
             .order_by("NODEORDER")
         )
         flow_nodes = [
-            OAWorkflowNode(
+            RegisterWorkflowNode(
                 workflow_id=i.WORKFLOWID_id,
                 node_order=i.NODEORDER,
                 node_id=i.NODEID_id,
@@ -188,18 +192,18 @@ class OAWorkflow(BaseModel):
                 is_reject=i.NODEID.ISREJECT,
                 is_reopen=i.NODEID.ISREOPEN,
                 is_end=i.NODEID.ISEND,
-                oa_workflow=self,
+                register_workflow=self,
                 status=choices.StatusChoice.VALID,
             )
             for i in oa_nodes
         ]
 
-        OAWorkflowNode.objects.bulk_create(
+        RegisterWorkflowNode.objects.bulk_create(
             flow_nodes,
             update_conflicts=True,
             update_fields=[
                 "status",
-                "oa_workflow",
+                "register_workflow",
                 "workflow_id",
                 "node_order",
                 "node_name",
@@ -210,9 +214,11 @@ class OAWorkflow(BaseModel):
             ],
             unique_fields=["node_id"],
         )
-        OAWorkflowNode.objects.exclude(
+        RegisterWorkflowNode.objects.exclude(
             node_id__in=[i.node_id for i in flow_nodes]
-        ).filter(oa_workflow_id=self.pk).update(status=choices.StatusChoice.INVALID)
+        ).filter(register_workflow_id=self.pk).update(
+            status=choices.StatusChoice.INVALID
+        )
 
     def sync_node_relations_from_oa(self):
         """
@@ -223,19 +229,19 @@ class OAWorkflow(BaseModel):
             "NODEID", "DESTNODEID"
         ).filter(WORKFLOWID_id=self.workflow_id)
         flow_node_relations = [
-            OAWorkflowEdge(
+            RegisterWorkflowEdge(
                 from_node_id=i.NODEID_id,
                 from_node_name=i.NODEID.NODENAME,
                 to_node_id=i.DESTNODEID_id,
                 to_node_name=i.DESTNODEID.NODENAME,
                 link_name=i.LINKNAME,
-                oa_workflow=self,
+                register_workflow=self,
             )
             for i in oa_node_links
         ]
 
-        OAWorkflowEdge.objects.filter(oa_workflow=self).delete()
-        OAWorkflowEdge.objects.bulk_create(flow_node_relations)
+        RegisterWorkflowEdge.objects.filter(register_workflow=self).delete()
+        RegisterWorkflowEdge.objects.bulk_create(flow_node_relations)
 
     def get_chart_url(self, manager_uid):
         """
@@ -250,10 +256,10 @@ class OAWorkflow(BaseModel):
 
     class Meta:
         verbose_name = verbose_name_plural = "流程注册"
-        db_table = "oa_workflow"
+        db_table = f"{OaWorkflowApiConfig.name}_register_workflow"
 
 
-class OAWorkflowNode(BaseModel):
+class RegisterWorkflowNode(BaseModel):
     """
     流程下的节点
     """
@@ -263,9 +269,9 @@ class OAWorkflowNode(BaseModel):
         ("0", "否"),
     )
 
-    oa_workflow = models.ForeignKey(
-        to=OAWorkflow,
-        on_delete=models.DO_NOTHING,
+    register_workflow = models.ForeignKey(
+        to=RegisterWorkflow,
+        on_delete=models.CASCADE,
         null=True,
         related_name="flow_nodes",
         verbose_name="所属流程",
@@ -313,19 +319,19 @@ class OAWorkflowNode(BaseModel):
 
     class Meta:
         verbose_name = verbose_name_plural = "流程节点"
-        db_table = "oa_workflow_node"
+        db_table = f"{OaWorkflowApiConfig.name}_register_workflow_node"
 
 
-class OAWorkflowEdge(BaseModel):
-    oa_workflow = models.ForeignKey(
-        to=OAWorkflow,
-        on_delete=models.DO_NOTHING,
+class RegisterWorkflowEdge(BaseModel):
+    register_workflow = models.ForeignKey(
+        to=RegisterWorkflow,
+        on_delete=models.CASCADE,
         null=True,
         related_name="flow_node_relations",
         verbose_name="所属流程",
     )
     from_node = models.ForeignKey(
-        to=OAWorkflowNode,
+        to=RegisterWorkflowNode,
         on_delete=models.DO_NOTHING,
         to_field="node_id",
         null=True,
@@ -336,7 +342,7 @@ class OAWorkflowEdge(BaseModel):
         verbose_name="FROM节点名", max_length=256, blank=True, default=""
     )
     to_node = models.ForeignKey(
-        to=OAWorkflowNode,
+        to=RegisterWorkflowNode,
         on_delete=models.DO_NOTHING,
         to_field="node_id",
         null=True,
@@ -355,4 +361,4 @@ class OAWorkflowEdge(BaseModel):
 
     class Meta:
         verbose_name = verbose_name_plural = "流程节点关系"
-        db_table = "oa_workflow_edge"
+        db_table = f"{OaWorkflowApiConfig.name}_register_workflow_edge"

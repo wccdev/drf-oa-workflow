@@ -1,4 +1,6 @@
 __all__ = [
+    "Approval",
+    "ApprovalOperation",
     "HRMDepartment",
     "HRMResource",
     "WorkflowBase",
@@ -11,12 +13,10 @@ __all__ = [
     "WorkflowType",
     "AbstractOaUserInfo",
     "OaUserInfo",
-    "OAWorkflowType",
-    "OAWorkflow",
-    "OAWorkflowNode",
-    "OAWorkflowEdge",
-    "WorkflowApproval",
-    "WorkflowApprovalOperation",
+    "RegisterWorkflowType",
+    "RegisterWorkflow",
+    "RegisterWorkflowNode",
+    "RegisterWorkflowEdge",
     "WorkflowRequestWccExtendInfo",
 ]
 
@@ -33,9 +33,9 @@ from .oa_workflow import WorkflowRequestWccExtendInfo
 from .oa_workflow import WorkflowType
 from .user import AbstractOaUserInfo
 from .user import OaUserInfo
-from .workflow_approval import WorkflowApproval
-from .workflow_approval import WorkflowApprovalOperation
-from .workflow_register import OAWorkflow
-from .workflow_register import OAWorkflowEdge
-from .workflow_register import OAWorkflowNode
-from .workflow_register import OAWorkflowType
+from .workflow_approval import Approval
+from .workflow_approval import ApprovalOperation
+from .workflow_register import RegisterWorkflow
+from .workflow_register import RegisterWorkflowEdge
+from .workflow_register import RegisterWorkflowNode
+from .workflow_register import RegisterWorkflowType

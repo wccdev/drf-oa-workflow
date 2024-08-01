@@ -8,15 +8,15 @@ from django.db.models import When
 from django.forms import fields as form_fields
 from django.http.response import HttpResponseRedirect
 
+from .models import Approval
+from .models import ApprovalOperation
 from .models import OaUserInfo
-from .models import WorkflowApproval
-from .models import WorkflowApprovalOperation
 from .models import WorkflowBase
 from .models import WorkflowType
-from .models.workflow_register import OAWorkflow
-from .models.workflow_register import OAWorkflowEdge
-from .models.workflow_register import OAWorkflowNode
-from .models.workflow_register import OAWorkflowType
+from .models.workflow_register import RegisterWorkflow
+from .models.workflow_register import RegisterWorkflowEdge
+from .models.workflow_register import RegisterWorkflowNode
+from .models.workflow_register import RegisterWorkflowType
 
 
 @admin.register(OaUserInfo)
@@ -87,8 +87,8 @@ class OaUserInfoAdmin(admin.ModelAdmin):
         return False
 
 
-@admin.register(OAWorkflowType)
-class OAWorkflowTypeAdmin(admin.ModelAdmin):
+@admin.register(RegisterWorkflowType)
+class RegisterWorkflowTypeAdmin(admin.ModelAdmin):
     list_display = [
         "id",
         "workflow_type_id",
@@ -114,7 +114,7 @@ class OAWorkflowTypeAdmin(admin.ModelAdmin):
     def import_data(self, request, type_id):
         if oa_workflow_type := WorkflowType.objects.filter(ID=type_id).first():
             creates = [
-                OAWorkflowType(
+                RegisterWorkflowType(
                     workflow_type_id=oa_workflow_type.ID,
                     workflow_type_name=oa_workflow_type.TYPENAME,
                     desc=oa_workflow_type.TYPEDESC,
@@ -123,7 +123,7 @@ class OAWorkflowTypeAdmin(admin.ModelAdmin):
                     deleted_at=None,
                 )
             ]
-            OAWorkflowType.objects.bulk_create(
+            RegisterWorkflowType.objects.bulk_create(
                 creates,
                 update_conflicts=True,
                 update_fields=[
@@ -138,10 +138,10 @@ class OAWorkflowTypeAdmin(admin.ModelAdmin):
 
     def upsert_data(self, request):
         exits_ids = list(
-            OAWorkflowType.objects.values_list("workflow_type_id", flat=True)
+            RegisterWorkflowType.objects.values_list("workflow_type_id", flat=True)
         )
         oa_types = [
-            OAWorkflowType(
+            RegisterWorkflowType(
                 workflow_type_id=i.ID,
                 workflow_type_name=i.TYPENAME,
                 desc=i.TYPEDESC,
@@ -151,7 +151,7 @@ class OAWorkflowTypeAdmin(admin.ModelAdmin):
             for i in WorkflowType.objects.filter(ID__in=exits_ids)
         ]
         if oa_types:
-            OAWorkflowType.objects.bulk_create(
+            RegisterWorkflowType.objects.bulk_create(
                 oa_types,
                 update_conflicts=True,
                 update_fields=["workflow_type_name", "desc", "order", "uuid"],
@@ -171,7 +171,7 @@ class OAWorkflowTypeAdmin(admin.ModelAdmin):
         # 获取OA流程目录
         result = WorkflowType.objects.values("ID", "TYPENAME").order_by("DSPORDER")
         exits_type_ids = list(
-            OAWorkflowType.objects.values_list("workflow_type_id", flat=True)
+            RegisterWorkflowType.objects.values_list("workflow_type_id", flat=True)
         )
         for i in result:
             i["disabled"] = i["ID"] in exits_type_ids
@@ -185,24 +185,24 @@ class OAWorkflowTypeAdmin(admin.ModelAdmin):
 
 class WorkFlowForm(forms.ModelForm):
     file_category_id = form_fields.IntegerField(required=False)
-    category = form_fields.IntegerField(required=False)
+    # category = form_fields.IntegerField(required=False)
 
     class Meta:
-        model = OAWorkflow
+        model = RegisterWorkflow
         fields = "__all__"  # noqa: DJ007
 
 
-class WorkFlowNodeInline(admin.TabularInline):
+class RegisterWorkflowNodeInline(admin.TabularInline):
     can_delete = False
-    model = OAWorkflowNode
+    model = RegisterWorkflowNode
     # autocomplete_fields = ["permissions"]
     verbose_name = "流程节点"
     verbose_name_plural = "流程节点"
     ordering = ("status", "-is_start", "is_end", "node_order")
-    exclude = ("permissions",)
+    exclude = ("form_permissions",)
     readonly_fields = [
         "status",
-        "oa_workflow",
+        "register_workflow",
         "workflow_id",
         "node_order",
         "node_id",
@@ -220,12 +220,23 @@ class WorkFlowNodeInline(admin.TabularInline):
         css = {"all": ("css/hide_admin_original.css",)}
 
 
-class WorkFlowEdgeInline(admin.TabularInline):
+class RegisterWorkflowEdgeInline(admin.TabularInline):
     can_delete = False
-    model = OAWorkflowEdge
+    model = RegisterWorkflowEdge
     verbose_name = "流程节点关系"
     verbose_name_plural = "流程节点关系"
+    fields = [
+        "status",
+        "from_node",
+        "from_node_name",
+        "to_node",
+        "to_node_name",
+        "link_name",
+    ]
     ordering = ("from_node_id", "-from_node_name", "to_node_id", "to_node_name")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("from_node", "to_node")
 
     def has_add_permission(self, *args, **kwargs):
         return False
@@ -237,8 +248,8 @@ class WorkFlowEdgeInline(admin.TabularInline):
         css = {"all": ("css/hide_admin_original.css",)}
 
 
-@admin.register(OAWorkflow)
-class OAWorkflowAdmin(admin.ModelAdmin):
+@admin.register(RegisterWorkflow)
+class RegisterWorkflowAdmin(admin.ModelAdmin):
     form = WorkFlowForm
     list_display = (
         "id",
@@ -256,19 +267,20 @@ class OAWorkflowAdmin(admin.ModelAdmin):
     list_display_links = ("name",)
     readonly_fields = (
         # "status",
-        # "name",
+        "name",
+        "workflow_id",
         "parent",
         "active_version",
-        "workflow_type_id",
+        "workflow_type",
         "workflow_form_id",
-        # "workflow_main_table",
+        "workflow_main_table",
         "workflow_version",
         "is_active_version",
         "order",
     )
     inlines = [
-        WorkFlowNodeInline,
-        WorkFlowEdgeInline,
+        RegisterWorkflowNodeInline,
+        RegisterWorkflowEdgeInline,
     ]
     search_fields = ("code", "name")
     search_help_text = "输入流程名称或编号以查找"
@@ -322,8 +334,8 @@ class OAWorkflowAdmin(admin.ModelAdmin):
             if not oa_workflow_id.isdigit():
                 self.message_user(request, "OA流程ID格式错误", level=messages.WARNING)
             else:
-                OAWorkflow.sync_other_versions(oa_workflow_id)
-                wf_class = OAWorkflow.objects.filter(
+                RegisterWorkflow.sync_other_versions(oa_workflow_id)
+                wf_class = RegisterWorkflow.objects.filter(
                     workflow_id=int(oa_workflow_id)
                 ).first()
                 if wf_class:
@@ -337,14 +349,16 @@ class OAWorkflowAdmin(admin.ModelAdmin):
                         level=messages.WARNING,
                     )
         elif action == "sync":
-            OAWorkflow.sync_other_versions()
+            RegisterWorkflow.sync_other_versions()
             self.message_user(request, "同步成功", level=messages.SUCCESS)
 
         # 获取OA流程
         exits_type_ids = list(
-            OAWorkflowType.objects.values_list("workflow_type_id", flat=True)
+            RegisterWorkflowType.objects.values_list("workflow_type_id", flat=True)
         )
-        exits_wf_ids = list(OAWorkflow.objects.values_list("workflow_id", flat=True))
+        exits_wf_ids = list(
+            RegisterWorkflow.objects.values_list("workflow_id", flat=True)
+        )
         result = (
             WorkflowBase.objects.select_related("WORKFLOWTYPE")
             .extra(select={"DSPORDER": "ECOLOGY.WORKFLOW_BASE.DSPORDER"})
@@ -371,7 +385,7 @@ class OAWorkflowAdmin(admin.ModelAdmin):
 
 class ApprovalOperationInline(admin.TabularInline):
     can_delete = False
-    model = WorkflowApprovalOperation
+    model = ApprovalOperation
     verbose_name = "流程操作记录"
     verbose_name_plural = "流程操作记录"
     ordering = ("-id",)
@@ -400,13 +414,13 @@ class ApprovalOperationInline(admin.TabularInline):
         css = {"all": ("css/hide_admin_original.css",)}
 
 
-@admin.register(WorkflowApproval)
+@admin.register(Approval)
 class WorkflowApprovalAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "code",
         # "title",
-        "workflow",
+        "register_workflow",
         "workflow_request_id",
         "approval_status",
         "created_by",
@@ -415,9 +429,9 @@ class WorkflowApprovalAdmin(admin.ModelAdmin):
     )
     search_fields = ("code", "workflow_request_id")
     search_help_text = "查询流程编号或者OA流程实例ID"
-    list_select_related = ("workflow", "created_by")
+    list_select_related = ("register_workflow", "created_by")
     ordering = ("-id",)
-    list_filter = ("workflow", "approval_status", "created_by")
+    list_filter = ("register_workflow", "approval_status", "created_by")
     inlines = [
         ApprovalOperationInline,
     ]

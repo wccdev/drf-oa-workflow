@@ -1,25 +1,27 @@
 from rest_framework import serializers
 
-from drf_oa_workflow.models import OAWorkflow
-from drf_oa_workflow.models import OAWorkflowEdge
-from drf_oa_workflow.models import OAWorkflowNode
+from drf_oa_workflow.models import RegisterWorkflow
+from drf_oa_workflow.models import RegisterWorkflowEdge
+from drf_oa_workflow.models import RegisterWorkflowNode
 
 
-class OAWorkflowNodeSerializer(serializers.ModelSerializer):
+class RegisterWorkflowNodeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OAWorkflowNode
-        exclude = ("oa_workflow",)
+        model = RegisterWorkflowNode
+        exclude = ("register_workflow",)
 
 
-class OAWorkflowNodeRetrieveSerializer(OAWorkflowNodeSerializer):
+class RegisterWorkFlowNodeSimpleSerializer(serializers.ModelSerializer):
+    can_return = serializers.BooleanField(default=False, label="可退回")
+
     class Meta:
-        model = OAWorkflowNode
-        exclude = ("oa_workflow",)
+        model = RegisterWorkflowNode
+        exclude = ("register_workflow", "form_permissions")
 
 
-class OAWorkflowEdgeSerializer(serializers.ModelSerializer):
+class RegisterWorkflowEdgeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OAWorkflowEdge
+        model = RegisterWorkflowEdge
         fields = [
             "id",
             "from_node_id",
@@ -30,7 +32,7 @@ class OAWorkflowEdgeSerializer(serializers.ModelSerializer):
         ]
 
 
-class OAWorkflowConfSerializer(serializers.ModelSerializer):
+class RegisterWorkflowSerializer(serializers.ModelSerializer):
     workflow_type_name = serializers.CharField(
         source="workflow_type.workflow_type_name", read_only=True, label="流程目录"
     )
@@ -46,13 +48,15 @@ class OAWorkflowConfSerializer(serializers.ModelSerializer):
         return tree_path
 
     class Meta:
-        model = OAWorkflow
+        model = RegisterWorkflow
         exclude = ("parent", "active_version")
 
 
-class OAWorkflowConfRetrieveSerializer(OAWorkflowConfSerializer):
-    flow_nodes = OAWorkflowNodeSerializer(many=True, read_only=True, label="流程节点")
-    flow_node_relations = OAWorkflowEdgeSerializer(
+class RegisterWorkflowRetrieveSerializer(RegisterWorkflowSerializer):
+    flow_nodes = RegisterWorkflowNodeSerializer(
+        many=True, read_only=True, label="流程节点"
+    )
+    flow_node_relations = RegisterWorkflowEdgeSerializer(
         many=True, read_only=True, label="流程节点关系"
     )
     chart_url = serializers.SerializerMethodField(
@@ -63,7 +67,7 @@ class OAWorkflowConfRetrieveSerializer(OAWorkflowConfSerializer):
         return instance.chart_url
 
 
-class OAWorkflowConfSaveSerializer(serializers.ModelSerializer):
+class RegisterWorkflowSaveSerializer(serializers.ModelSerializer):
     code = serializers.CharField(
         required=True, allow_blank=False, allow_null=False, label="流程编号"
     )
@@ -75,7 +79,7 @@ class OAWorkflowConfSaveSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = OAWorkflow
+        model = RegisterWorkflow
         fields = (
             "code",
             "name",
@@ -87,11 +91,3 @@ class OAWorkflowConfSaveSerializer(serializers.ModelSerializer):
             "remark",
             "form_permissions",
         )
-
-
-class WorkFlowNodeSimpleSerializer(serializers.ModelSerializer):
-    can_return = serializers.BooleanField(default=False, label="可退回")
-
-    class Meta:
-        model = OAWorkflowNode
-        exclude = ("oa_workflow", "form_permissions")

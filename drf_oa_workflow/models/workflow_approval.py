@@ -3,16 +3,17 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils import timezone
 
+from drf_oa_workflow.apps import OaWorkflowApiConfig
 from drf_oa_workflow.choices import ApprovalStatus
 from drf_oa_workflow.choices import OAWorkflowLogTypes
 from drf_oa_workflow.choices import WFOperationTypes
 from drf_oa_workflow.choices import WorkflowAction
 
 from .base import BaseAuditModel
-from .workflow_register import OAWorkflow
+from .workflow_register import RegisterWorkflow
 
 
-class WorkflowApproval(BaseAuditModel):
+class Approval(BaseAuditModel):
     """
     流程记录
     """
@@ -23,8 +24,11 @@ class WorkflowApproval(BaseAuditModel):
     title = models.CharField(
         verbose_name="流程标题", max_length=256, blank=True, default=""
     )
-    workflow = models.ForeignKey(
-        to=OAWorkflow, on_delete=models.DO_NOTHING, verbose_name="流程"
+    register_workflow = models.ForeignKey(
+        to=RegisterWorkflow,
+        on_delete=models.PROTECT,
+        related_name="approvals",
+        verbose_name="流程",
     )
     workflow_request_id = models.CharField(verbose_name="OA流程实例ID", max_length=128)
     # 业务数据
@@ -48,7 +52,7 @@ class WorkflowApproval(BaseAuditModel):
 
     class Meta:
         verbose_name = verbose_name_plural = "流程审核"
-        db_table = "workflow_approval"
+        db_table = f"{OaWorkflowApiConfig.name}_approval"
 
     def __str__(self):
         return self.title
@@ -86,7 +90,7 @@ class WorkflowApproval(BaseAuditModel):
         :param oa_log_id:       操作记录ID
         :param remark:          签字意见、审批备注等
         """
-        WorkflowApprovalOperation.objects.create(
+        ApprovalOperation.objects.create(
             created_by=operator,
             updated_by=operator,
             approval=self,
@@ -97,9 +101,9 @@ class WorkflowApproval(BaseAuditModel):
         )
 
 
-class WorkflowApprovalOperation(BaseAuditModel):
+class ApprovalOperation(BaseAuditModel):
     approval = models.ForeignKey(
-        to=WorkflowApproval,
+        to=Approval,
         on_delete=models.DO_NOTHING,
         verbose_name="流程记录",
         related_name="operations",
@@ -111,7 +115,7 @@ class WorkflowApprovalOperation(BaseAuditModel):
 
     class Meta:
         verbose_name = verbose_name_plural = "流程操作记录"
-        db_table = "workflow_approval_operation"
+        db_table = f"{OaWorkflowApiConfig.name}_approval_operation"
 
     def __str__(self):
         return self.get_operation_type_display()

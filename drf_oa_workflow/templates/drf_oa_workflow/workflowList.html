@@ -11,10 +11,10 @@
       // 构建 URL，替换 'your_model' 和 'custom_action' 为实际的模型和方法
       if (action === "import") {
         const oaWorkflowId = document.getElementById('oaWorkflowId').value;
-        const url = `{% url 'admin:drf_oa_workflow_oaworkflow_changelist'  %}?action=${action}&workflowId=${oaWorkflowId}`;
+        const url = `{% url 'admin:drf_oa_workflow_registerworkflow_changelist'  %}?action=${action}&workflowId=${oaWorkflowId}`;
         window.location.href = url;
       } else {
-        const url = `{% url 'admin:drf_oa_workflow_oaworkflow_changelist'  %}?action=${action}`;
+        const url = `{% url 'admin:drf_oa_workflow_registerworkflow_changelist'  %}?action=${action}`;
         window.location.href = url;
       }
     }

@@ -27,8 +27,8 @@ User = get_user_model()
 
 
 class WFService:
-    from drf_oa_workflow.models import OAWorkflow
-    from drf_oa_workflow.models import WorkflowApproval
+    from drf_oa_workflow.models import Approval
+    from drf_oa_workflow.models import RegisterWorkflow
 
     @classmethod
     def generate_code(cls, prefix: str, suffix_len: int = 6):
@@ -51,7 +51,7 @@ class WFService:
     def submit_oa(  # noqa: PLR0913
         cls,
         content_object,
-        wf_class: OAWorkflow,
+        wf_class: RegisterWorkflow,
         action,
         title,
         front_form_info,
@@ -59,7 +59,7 @@ class WFService:
         detail_data: list | None = None,
         remark="",
         submitter=None,
-    ) -> WorkflowApproval:
+    ) -> Approval:
         """
         提交流程到OA
         :param content_object:     提交的单据
@@ -73,7 +73,7 @@ class WFService:
         :param submitter:          流程提交人
         """
         # from drf_oa_workflow.models import OAWorkflow
-        from drf_oa_workflow.models import WorkflowApproval
+        from drf_oa_workflow.models import Approval
         from drf_oa_workflow.models import WorkflowRequestWccExtendInfo
 
         # 提交的主表数据处理
@@ -109,10 +109,10 @@ class WFService:
             submit_type = WFOperationTypes.SUBMIT_WITHOUT_WF
             content_object.approve()
 
-        approval = WorkflowApproval(
+        approval = Approval(
             action=action,
             title=title,
-            workflow=wf_class,
+            register_workflow=wf_class,
             workflow_request_id=oa_request_id,
             content_object=content_object,
             created_by=submitter,
@@ -143,14 +143,12 @@ class WFService:
         批量获取提交到OA的流程在本系统的提交记录以及流程配置信息
         :param oa_request_ids: OA流程requestId[]
         """
-        from drf_oa_workflow.models import WorkflowApproval
+        from drf_oa_workflow.models import Approval
         from drf_oa_workflow.serializers.workflow_approval import (
             WFListApprovalSerializer,
         )
 
-        approvals = WorkflowApproval.objects.filter(
-            workflow_request_id__in=oa_request_ids
-        )
+        approvals = Approval.objects.filter(workflow_request_id__in=oa_request_ids)
         approvals = WFListApprovalSerializer.process_queryset(None, approvals)
         prepare_datas = WFListApprovalSerializer(approvals, many=True).data
 
@@ -174,7 +172,7 @@ class WFService:
 
     @classmethod
     def get_oa_workflow_form_buttons(
-        cls, oa_api_server: OaWorkflowApi, approval: WorkflowApproval, oa_node_id
+        cls, oa_api_server: OaWorkflowApi, approval: Approval, oa_node_id
     ):
         """
         从OA获取当前用户当前流程的可操作的按钮组
@@ -287,7 +285,7 @@ class WFService:
         return handled_buttons, oa_buttons
 
     @classmethod
-    def get_oa_workflow_info(cls, approval: WorkflowApproval, current_user: User):
+    def get_oa_workflow_info(cls, approval: Approval, current_user: User):
         """
         从OA获取流程的详情
         :param approval: 系统提交到OA的流程记录

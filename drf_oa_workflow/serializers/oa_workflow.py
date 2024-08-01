@@ -8,7 +8,7 @@ from rest_framework import serializers
 from drf_oa_workflow.choices import ApprovalStatus
 from drf_oa_workflow.choices import DocStatus
 from drf_oa_workflow.choices import WFOperationTypes
-from drf_oa_workflow.models import WorkflowApprovalOperation
+from drf_oa_workflow.models import ApprovalOperation
 from drf_oa_workflow.models import WorkflowBase
 from drf_oa_workflow.models import WorkflowCurrentOperator
 from drf_oa_workflow.models import WorkflowRequestBase
@@ -186,7 +186,7 @@ class WFRequestLogCusListSerializer(serializers.ListSerializer):
         result = super().to_representation(data)
 
         # 替换审批拒绝操作记录的显示
-        terminate_log_ids = WorkflowApprovalOperation.objects.filter(
+        terminate_log_ids = ApprovalOperation.objects.filter(
             oa_log_id__in=[i["id"] for i in result]
         ).values_list("oa_log_id", flat=True)
         for i in result:

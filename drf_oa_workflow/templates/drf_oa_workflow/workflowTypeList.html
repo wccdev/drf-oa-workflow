@@ -14,10 +14,10 @@
         selectField.disabled = true;
         const selectIndex = selectField.options.selectedIndex;
         const selectValue = selectField.options[selectIndex].value;
-        const url = `{% url 'admin:drf_oa_workflow_oaworkflowtype_changelist'  %}?${action}=true&type_id=${selectValue}`;
+        const url = `{% url 'admin:drf_oa_workflow_registerworkflowtype_changelist'  %}?${action}=true&type_id=${selectValue}`;
         window.location.href = url;
       } else {
-        const url = `{% url 'admin:drf_oa_workflow_oaworkflowtype_changelist'  %}?${action}=true`;
+        const url = `{% url 'admin:drf_oa_workflow_registerworkflowtype_changelist'  %}?${action}=true`;
         window.location.href = url;
       }
     }

@@ -20,7 +20,9 @@
     <input type="submit" value="保存并增加另一个" name="_addanother" />
     <input type="submit" value="保存并继续编辑" name="_continue" />
     <input type="submit" value="同步流程信息" name="_sync_flow_nodes" />
-    {#    <a href="/admin/approvals/oaworkflow/2/delete/" class="deletelink">删除</a>#}
+    <a href="{% url 'admin:drf_oa_workflow_registerworkflow_delete' original.pk %}"
+       class="deletelink">删除</a>
+
   </div>
 {% endblock submit_buttons_bottom %}
 {% block content %}

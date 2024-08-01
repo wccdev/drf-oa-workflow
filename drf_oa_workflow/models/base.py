@@ -65,7 +65,7 @@ class BaseApprovalModel(BaseAuditModel):
         verbose_name="审批状态", choices=ApprovalStatus, null=True
     )
     workflow_approval = models.ForeignKey(
-        to="drf_oa_workflow.WorkflowApproval",
+        to="drf_oa_workflow.Approval",
         on_delete=models.DO_NOTHING,
         null=True,
         blank=True,

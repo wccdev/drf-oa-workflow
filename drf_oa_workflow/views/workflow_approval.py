@@ -26,10 +26,10 @@ from drf_oa_workflow.contains import DEFAULT_MAIN_DATA
 from drf_oa_workflow.contains import TERMINATE_COLUMN
 from drf_oa_workflow.contains import TERMINATE_MAIN_DATA
 from drf_oa_workflow.mixin import OaWFApiViewMixin
+from drf_oa_workflow.models import Approval
 from drf_oa_workflow.models import OaUserInfo
-from drf_oa_workflow.models import OAWorkflow
-from drf_oa_workflow.models import OAWorkflowNode
-from drf_oa_workflow.models import WorkflowApproval
+from drf_oa_workflow.models import RegisterWorkflow
+from drf_oa_workflow.models import RegisterWorkflowNode
 from drf_oa_workflow.models import WorkflowRequestBase
 from drf_oa_workflow.models import WorkflowRequestLog
 from drf_oa_workflow.models import WorkflowRequestWccExtendInfo
@@ -48,8 +48,10 @@ from drf_oa_workflow.serializers.post_data_valid import WFTransmitDataSerializer
 from drf_oa_workflow.serializers.user import WorkFlowUserSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalDetailSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalSerializer
-from drf_oa_workflow.serializers.workflow_register import OAWorkflowNodeSerializer
-from drf_oa_workflow.serializers.workflow_register import WorkFlowNodeSimpleSerializer
+from drf_oa_workflow.serializers.workflow_register import RegisterWorkflowNodeSerializer
+from drf_oa_workflow.serializers.workflow_register import (
+    RegisterWorkFlowNodeSimpleSerializer,
+)
 from drf_oa_workflow.service import WFService
 from drf_oa_workflow.settings import SYSTEM_IDENTIFIER_KEY
 from drf_oa_workflow.utils import OaWorkflowApi
@@ -61,7 +63,7 @@ OaUserModel: OaUserInfo = get_sync_oa_user_model()
 
 def filter_workflow(qs, name, value):
     ids = list(
-        OAWorkflow.objects.filter(
+        RegisterWorkflow.objects.filter(
             Q(id=int(value)) | Q(parent__id=int(value))
         ).values_list("workflow_id", flat=True)
     )
@@ -88,7 +90,9 @@ class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
             oa_user_id = request.user.oa_user_id
         except APIException:
             oa_user_id = None
-        workflow_ids = list(OAWorkflow.objects.values_list("workflow_id", flat=True))
+        workflow_ids = list(
+            RegisterWorkflow.objects.values_list("workflow_id", flat=True)
+        )
 
         return oa_user_id, workflow_ids
 
@@ -132,7 +136,7 @@ class WorkflowsViewSet(OaWFApiViewMixin, ListModelMixin, ExtGenericViewSet):
 class WorkflowApprovalViewSet(
     OaWFApiViewMixin, ListModelMixin, RetrieveModelMixin, ExtGenericViewSet
 ):
-    queryset = WorkflowApproval.objects.all()
+    queryset = Approval.objects.all()
     serializer_class = {
         "default": WFApprovalSerializer,
         "retrieve": WFApprovalDetailSerializer,
@@ -448,7 +452,7 @@ class WorkflowApprovalViewSet(
         获取流程的操作按钮、节点等信息
         """
         approval = get_object_or_404(
-            self.queryset.select_related("workflow"),
+            self.queryset.select_related("register_workflow"),
             workflow_request_id=workflow_request_id,
         )
 
@@ -458,8 +462,8 @@ class WorkflowApprovalViewSet(
         )
 
         # 流程节点
-        node_serializer = WorkFlowNodeSimpleSerializer(
-            approval.workflow.flow_nodes.all(), many=True
+        node_serializer = RegisterWorkFlowNodeSimpleSerializer(
+            approval.register_workflow.flow_nodes.all(), many=True
         )
         nodes = node_serializer.data
         wf_passed_nodes = []
@@ -563,10 +567,10 @@ class WorkflowApprovalViewSet(
         获取流程部分自定义信息
         """
         instance = self.get_object()
-        nodes = OAWorkflowNode.objects.filter(oa_workflow=instance.workflow).order_by(
-            "status", "-is_start", "is_end", "node_order"
-        )
-        node_serializers = OAWorkflowNodeSerializer(nodes, many=True)
+        nodes = RegisterWorkflowNode.objects.filter(
+            register_workflow=instance.workflow
+        ).order_by("status", "-is_start", "is_end", "node_order")
+        node_serializers = RegisterWorkflowNodeSerializer(nodes, many=True)
 
         # 当前流程所相关的用户
         try:

@@ -23,6 +23,8 @@ DEFAULTS = {
     "OA_HOST": "",
     # OA继承统一认证配置
     "OA_SSO_TOKEN_APP_ID": "",
+    # OA流程管理人员账号LOGINID
+    "OA_WORKFLOW_MANAGER_LOGINID": "",
     # requests包
     "REQUESTS_LIBRARY": "requests",
     # DEBUG

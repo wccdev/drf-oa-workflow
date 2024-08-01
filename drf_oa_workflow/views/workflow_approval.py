@@ -48,10 +48,10 @@ from drf_oa_workflow.serializers.post_data_valid import WFTransmitDataSerializer
 from drf_oa_workflow.serializers.user import WorkFlowUserSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalDetailSerializer
 from drf_oa_workflow.serializers.workflow_approval import WFApprovalSerializer
-from drf_oa_workflow.serializers.workflow_register import RegisterWorkflowNodeSerializer
 from drf_oa_workflow.serializers.workflow_register import (
-    RegisterWorkFlowNodeSimpleSerializer,
+    RegisterWorkflowNodeExtSerializer,
 )
+from drf_oa_workflow.serializers.workflow_register import RegisterWorkflowNodeSerializer
 from drf_oa_workflow.service import WFService
 from drf_oa_workflow.settings import SYSTEM_IDENTIFIER_KEY
 from drf_oa_workflow.utils import OaWorkflowApi
@@ -462,7 +462,7 @@ class WorkflowApprovalViewSet(
         )
 
         # 流程节点
-        node_serializer = RegisterWorkFlowNodeSimpleSerializer(
+        node_serializer = RegisterWorkflowNodeExtSerializer(
             approval.register_workflow.flow_nodes.all(), many=True
         )
         nodes = node_serializer.data

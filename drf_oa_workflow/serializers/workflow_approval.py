@@ -7,15 +7,9 @@ from drf_oa_workflow.models import RegisterWorkflowEdge
 from drf_oa_workflow.models import RegisterWorkflowNode
 from drf_oa_workflow.utils import get_sync_oa_user_model
 
+from .workflow_register import RegisterWorkflowNodeSerializer
+
 OAUserModel = get_sync_oa_user_model()
-
-
-class WorkFlowNodeSerializer(serializers.ModelSerializer):
-    can_return = serializers.BooleanField(default=False, label="可退回")
-
-    class Meta:
-        model = RegisterWorkflowNode
-        exclude = ("register_workflow",)
 
 
 class OAWorkflowSimpleSerializer(serializers.ModelSerializer):
@@ -129,7 +123,7 @@ class WFApprovalSerializer(serializers.ModelSerializer):
 
 
 class WFApprovalDetailSerializer(WFApprovalSerializer):
-    workflow_nodes = WorkFlowNodeSerializer(
+    register_workflow_nodes = RegisterWorkflowNodeSerializer(
         source="register_workflow.flow_nodes", many=True, read_only=True
     )
 

@@ -11,12 +11,12 @@ class RegisterWorkflowNodeSerializer(serializers.ModelSerializer):
         exclude = ("register_workflow",)
 
 
-class RegisterWorkFlowNodeSimpleSerializer(serializers.ModelSerializer):
+class RegisterWorkflowNodeExtSerializer(serializers.ModelSerializer):
     can_return = serializers.BooleanField(default=False, label="可退回")
 
     class Meta:
         model = RegisterWorkflowNode
-        exclude = ("register_workflow", "form_permissions")
+        exclude = ("register_workflow",)
 
 
 class RegisterWorkflowEdgeSerializer(serializers.ModelSerializer):

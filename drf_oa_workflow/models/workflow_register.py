@@ -10,6 +10,8 @@ from drf_oa_workflow.models import WorkflowBase
 from drf_oa_workflow.models import WorkflowFlowNode
 from drf_oa_workflow.models import WorkflowNodeLink
 from drf_oa_workflow.models.base import BaseModel
+from drf_oa_workflow.settings import SETTING_PREFIX
+from drf_oa_workflow.settings import api_settings
 from drf_oa_workflow.utils import OaWorkflowApi
 
 __all__ = [
@@ -252,7 +254,16 @@ class RegisterWorkflow(BaseModel):
 
     @property
     def chart_url(self):
-        return self.get_chart_url("A0009527")
+        if not api_settings.OA_WORKFLOW_MANAGER_LOGINID:
+            raise ValueError(
+                "若要查看流程图，"
+                "请先在django settings中设置具有OA流程管理权限的账号LOGINID:"
+                f"\n{SETTING_PREFIX} = {'{'}"
+                '\n    "OA_WORKFLOW_MANAGER_LOGINID": "xxxxx",'
+                "\n    ..."
+                "\n}"
+            )
+        return self.get_chart_url(api_settings.OA_WORKFLOW_MANAGER_LOGINID)
 
     class Meta:
         verbose_name = verbose_name_plural = "流程注册"

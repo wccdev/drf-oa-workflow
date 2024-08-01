@@ -421,7 +421,7 @@ class OaApi:
 
     def get_workflow_chart_url(self, staff_code: str, oa_workflow_id):
         """
-        获取流程配置的流程图链接， 不需要注册用户
+        以管理流程方式获取流程配置的流程图链接， 不需要注册用户
         :param staff_code:     拥有OA可配置流程权限的账号工号
         :param oa_workflow_id: 要获取流程图的OA流程ID
         """

@@ -361,8 +361,7 @@ class RegisterWorkflowAdmin(admin.ModelAdmin):
         )
         result = (
             WorkflowBase.objects.select_related("WORKFLOWTYPE")
-            .extra(select={"DSPORDER": "ECOLOGY.WORKFLOW_BASE.DSPORDER"})
-            .filter(WORKFLOWTYPE_id__in=exits_type_ids)
+            .filter(WORKFLOWTYPE_id__in=exits_type_ids, VERSION__isnull=True)
             .exclude(ID__in=exits_wf_ids)
             .exclude(ISTEMPLATE="1")
             .annotate(

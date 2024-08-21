@@ -4,17 +4,17 @@ except ModuleNotFoundError:
     shared_task = lambda name: type(name)  # noqa: E731
 
 from drf_oa_workflow.models import HRMResource
-from drf_oa_workflow.models import OaUserInfo
+from drf_oa_workflow.utils import get_sync_oa_user_model
 
 
 @shared_task(name="drf_oa_workflow:同步OA用户")
-def sync_oa_users():
+def sync_oa_users(oa_user_model=None):
     """
     同步Oa用户
     """
     all_oa_users = HRMResource.objects.select_related("DEPARTMENTID").all()
     objs = [
-        OaUserInfo(
+        get_sync_oa_user_model()(
             user_id=i.ID,
             name=i.LASTNAME,
             staff_code_id=i.LOGINID,
@@ -23,7 +23,7 @@ def sync_oa_users():
         )
         for i in all_oa_users
     ]
-    OaUserInfo.objects.bulk_create(
+    get_sync_oa_user_model().objects.bulk_create(
         objs,
         update_conflicts=True,
         update_fields=["staff_code_id", "dept_id", "name", "dept_name"],

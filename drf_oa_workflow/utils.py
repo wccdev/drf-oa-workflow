@@ -17,6 +17,7 @@ from requests.exceptions import ConnectionError
 from requests.exceptions import JSONDecodeError
 from rest_framework.exceptions import APIException
 
+from drf_oa_workflow import choices
 from drf_oa_workflow.models import HRMResource
 from drf_oa_workflow.settings import DEFAULT_SYNC_OA_USER_MODEL
 from drf_oa_workflow.settings import SETTING_PREFIX
@@ -575,6 +576,8 @@ class OaWorkflowApi(OaApi):
         title="",
         remark="",
         request_level="",
+        submit_type=choices.SubmitTypes.SUBMIT,
+        del_when_failed=choices.SubmitFailedDoes.DELETE,
     ):
         """
         创建流程
@@ -584,6 +587,8 @@ class OaWorkflowApi(OaApi):
         :param title: 提交流程的标题
         :param remark: 提交流程的备注（审批意见）
         :param request_level: 流程紧急度（如果有）
+        :param submit_type: 新建流程是否提交到第二节点["0"：不流转 "1"：流转(默认)]
+        :param del_when_failed: 新建流程失败是否删除流程["0"：不删除 "1"：删除(默认)]
         """
         if not workflow_id:
             raise APIException("需要提交流程的流程ID")
@@ -591,8 +596,22 @@ class OaWorkflowApi(OaApi):
             raise APIException("需要提交流程的主表数据")
         post_data = {
             "mainData": json.dumps(main_data),
-            "detailData": json.dumps(detail_data),
-            "otherParams": {},
+            "detailData": json.dumps(detail_data) if detail_data else "",
+            "otherParams": json.dumps(
+                {
+                    # 1.是否流转到第2个节点
+                    "isnextflow": submit_type,
+                    # 2.创建流程失败是否删除流程
+                    "delReqFlowFaild": del_when_failed,
+                    # TODO 以下参数暂未调研与启用
+                    # TODO 3.流程密级，开启密级后生效，默认公开
+                    # "requestSecLevel": "",
+                    # TODO 4.保密期限，流程密级为秘密或机密时，通过改参数上传保密期限，不上传时取分级保护出的保密期限  # noqa: E501
+                    # "requestSecValidity": "",
+                    # TODO 5.是否验证用户创建流程权限 [0：不验证 1：验证(默认)]
+                    # "isVerifyPer": "",
+                }
+            ),
             "remark": remark,
             # "requestLevel": "0",
             # "requestName": "标题",
@@ -608,18 +627,28 @@ class OaWorkflowApi(OaApi):
         res: dict = self._post_oa(api_path, post_data=post_data)
         return res["data"]["requestid"]
 
-    def review(self, request_id: str, remark="", extras: dict = None):  # noqa: RUF013 PEP 484
+    def review(
+        self,
+        request_id: str,
+        remark="",
+        review_type=choices.ReviewTypes.SUBMIT,
+        extras: dict = None,  # noqa: RUF013
+    ):
         """
         提交/审核
         :param request_id OA流程请求ID
-        :param remark
+        :param remark: 审批备注
+        :param review_type: 审批类型[save: 保存 submit: 提交(默认)]
         :param extras
         """
         api_path = "/api/workflow/paService/submitRequest"
-        post_data = {"otherParams": {}, "remark": remark, "requestId": request_id}
+        post_data = {
+            "otherParams": json.dumps({"src": review_type.SUBMIT}),
+            "remark": remark,
+            "requestId": request_id,
+        }
         if extras:
             post_data.update(extras)
-        resp = self._post_oa(api_path, post_data=post_data)
 
         # ERROR DATA
         _ERROR = {  # noqa: N806
@@ -632,7 +661,7 @@ class OaWorkflowApi(OaApi):
                 "otherParams": {},
             },
         }
-        return resp
+        return self._post_oa(api_path, post_data=post_data)
 
     def reject(
         self,
@@ -666,7 +695,6 @@ class OaWorkflowApi(OaApi):
             "remark": remark,
             "requestId": request_id,
         }
-        resp = self._post_oa(api_path, post_data=post_data)
 
         # ERROR DEEMO
         _ERROR = {  # noqa: N806
@@ -688,7 +716,7 @@ class OaWorkflowApi(OaApi):
                 "otherParams": {"doAutoApprove": "0"},
             },
         }
-        return resp
+        return self._post_oa(api_path, post_data=post_data)
 
     def get_chart_url(self, request_id: str, staff_code):
         """

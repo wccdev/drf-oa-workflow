@@ -2,6 +2,23 @@ from django.db.models import IntegerChoices
 from django.db.models import TextChoices
 
 
+class SubmitTypes(TextChoices):
+    # 提交（创建）流程时的提交类型
+    SAVE = "0", "保存"  # 流程在创建节点暂存，不会转到第2个节点
+    SUBMIT = "1", "提交"  # 流程自动流转到第2个节点
+
+
+class SubmitFailedDoes(TextChoices):
+    NOT_DELETE = "0", "不删除"
+    DELETE = "1", "删除"
+
+
+class ReviewTypes(TextChoices):
+    # 审批（创建）流程时的提交类型
+    SAVE = "save", "保存"  # 不会流转到下个节点
+    SUBMIT = "submit", "提交"  # 会流转到下个节点
+
+
 class StatusChoice(IntegerChoices):
     INVALID = 0, "无效"
     VALID = 1, "有效"

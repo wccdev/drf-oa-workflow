@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import models
 
 __all__ = [
@@ -16,8 +15,8 @@ class AbstractOaUserInfo(models.Model):
     staff_code = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.DO_NOTHING,
-        # to_field="username",
-        to_field=get_user_model().USERNAME_FIELD,
+        to_field="username",
+        # to_field=get_user_model().USERNAME_FIELD,
         null=True,
         db_column="staff_code",
         db_constraint=False,

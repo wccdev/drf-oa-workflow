@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from rest_framework.exceptions import APIException
@@ -9,8 +9,6 @@ from drf_oa_workflow.choices import ApprovalStatus
 from drf_oa_workflow.choices import DocStatus
 from drf_oa_workflow.choices import StatusChoice
 from drf_oa_workflow.choices import WorkflowAction
-
-User = get_user_model()
 
 
 class BaseModel(models.Model):
@@ -38,10 +36,16 @@ class BaseAuditModel(BaseModel):
     """
 
     created_by = models.ForeignKey(
-        to=User, on_delete=models.DO_NOTHING, related_name="+", verbose_name="创建人"
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.DO_NOTHING,
+        related_name="+",
+        verbose_name="创建人",
     )
     updated_by = models.ForeignKey(
-        to=User, on_delete=models.DO_NOTHING, related_name="+", verbose_name="修改人"
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.DO_NOTHING,
+        related_name="+",
+        verbose_name="修改人",
     )
 
     class Meta:

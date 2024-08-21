@@ -568,6 +568,16 @@ class OaWorkFlow(OaApi):
             result.append({"workflowTypeName": type_name, "workflows": list(g)})
         return result
 
+    def submit(self, post_data: dict):
+        """
+        创建流程
+        :param post_data:
+        """
+        # 示例数据 api_example_data.SUBMIT_DATA_DEMO
+        api_path = "/api/workflow/paService/doCreateRequest"
+        res: dict = self._post_oa(api_path, post_data=post_data)
+        return res["data"]["requestid"]
+
     def submit_new(  # noqa: PLR0913
         self,
         workflow_id,

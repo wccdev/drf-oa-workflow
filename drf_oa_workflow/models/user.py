@@ -16,7 +16,7 @@ class AbstractOaUserInfo(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.DO_NOTHING,
         to_field="username",
-        # related_name="oa_user",
+        # to_field=get_user_model().USERNAME_FIELD,
         null=True,
         db_column="staff_code",
         db_constraint=False,

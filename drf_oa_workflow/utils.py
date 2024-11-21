@@ -244,7 +244,9 @@ class OaApi:
         url = f"{self.oa_host}{api_path}"
         headers = headers or self._request_headers
         try:
-            resp: system_requests.Response = rf(url, headers=headers, **kwargs)
+            resp: system_requests.Response = rf(
+                url, headers=headers, **kwargs, timeout=api_settings.REQUESTS_TIMEOUT
+            )
         except ConnectionError as e:
             raise APIException(f"系统无法连接到OA服务: {e}")
         except Exception as e:

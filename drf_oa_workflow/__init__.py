@@ -2,4 +2,4 @@
 
 __author__ = """Leslie Chan"""
 __email__ = "leslie_chan@wochacha.com"
-__version__ = "0.5.8"
+__version__ = "0.5.9"

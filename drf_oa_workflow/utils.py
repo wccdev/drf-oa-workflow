@@ -200,6 +200,39 @@ class OaApi:
             "userid": self.encrypt_userid,
         }
 
+    def get_faild_info(self, resp_data: dict):
+        """
+        获取OA接口返回的失败信息
+        """
+        error_code = resp_data["code"]
+        if error_code == "NO_PERMISSION":
+            msg = resp_data.get("errMsg", {}).get("msg")
+            if msg:
+                return f"OA提示: {msg}"
+            msg_type = resp_data.get("reqFailMsg", {}).get("msgType", "")
+            if msg_type == "NO_REQUEST_SUBMIT_PERMISSION":
+                return "OA提示: 您无提交该流程权限！"
+            if msg_type:
+                return f"OA提示: {msg_type}"
+
+        elif error_code == "SYSTEM_INNER_ERROR":
+            msg = ""
+            msg_type = resp_data.get("reqFailMsg", {}).get("msgType", "")
+            if msg_type == "BEFORE_NODE_OPERATE_EX_FAIL":
+                error_detail = (
+                    resp_data.get("reqFailMsg", {}).get("msgInfo", {}).get("detail")
+                )
+                if error_detail:
+                    re_match = re.match(
+                        r"ESB接口执行失败：批次号\(\w+\)(?P<error_msg>.*)", error_detail
+                    )
+                    if re_match:
+                        msg = re_match.groupdict()["error_msg"].strip()
+                    else:
+                        msg = error_detail
+                    return f"内部错误: {msg}"
+        return f"OA提示: {error_code};  \n{json.dumps(resp_data, ensure_ascii=False)}"
+
     def __request(
         self,
         api_path,
@@ -211,7 +244,9 @@ class OaApi:
         url = f"{self.oa_host}{api_path}"
         headers = headers or self._request_headers
         try:
-            resp: system_requests.Response = rf(url, headers=headers, **kwargs)
+            resp: system_requests.Response = rf(
+                url, headers=headers, **kwargs, timeout=api_settings.REQUESTS_TIMEOUT
+            )
         except ConnectionError as e:
             raise APIException(f"系统无法连接到OA服务: {e}")
         except Exception as e:
@@ -265,10 +300,11 @@ class OaApi:
                 )
             raise ValueError(f"Error: {resp.text}")
         if isinstance(res, dict) and res.get("code", "") and res["code"] != "SUCCESS":
-            error_msg = f"OA提示: {res['code']}, {res.get('errMsg', '')};"
-            if api_settings.DEBUG:
-                error_msg = f"{error_msg}\n{json.dumps(res, ensure_ascii=False)}"
-            raise APIException(detail=error_msg)
+            # error_msg = f"OA提示: {res['code']}, {res.get('errMsg', '')};"
+            # if api_settings.DEBUG:
+            #     error_msg = f"{error_msg}\n{json.dumps(res, ensure_ascii=False)}"
+            # raise APIException(detail=error_msg)
+            raise APIException(detail=self.get_faild_info(res))
         return res
 
     def _get_oa(

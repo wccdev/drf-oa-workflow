@@ -7,6 +7,8 @@ from drf_oa_workflow.choices import OAWFCOIsRemarks
 from drf_oa_workflow.choices import OAWFCOViewType
 from drf_oa_workflow.choices import OAWFHandleReSubmit
 from drf_oa_workflow.choices import OAWFHandleReSubmitDefault
+from drf_oa_workflow.choices import OAWFOperateCode
+from drf_oa_workflow.choices import OAWFOperateType
 from drf_oa_workflow.choices import OAWFRejectType
 from drf_oa_workflow.choices import OAWorkflowLogTypes
 from drf_oa_workflow.db.manager import CurrentOperatorManager
@@ -495,3 +497,74 @@ class WorkflowRequestBase(OADbBaseModel):
         managed = False
         db_table = 'ECOLOGY"."WORKFLOW_REQUESTBASE'
         verbose_name = verbose_name_plural = "OA流程信息"
+
+
+class WorkflowRequestOperateLog(OADbBaseModel):
+    ID = models.IntegerField(primary_key=True)
+    REQUESTID = models.ForeignKey(
+        WorkflowRequestBase,
+        db_column="REQUESTID",
+        to_field="REQUESTID",
+        null=True,
+        on_delete=models.DO_NOTHING,
+        related_name="request_operate_logs",
+        verbose_name="所属流程请求",
+    )
+    NODEID = models.ForeignKey(
+        WorkflowNodeBase,
+        db_column="NODEID",
+        to_field="ID",
+        on_delete=models.DO_NOTHING,
+        related_name="+",
+        verbose_name="节点信息",
+    )
+    ISREMARK = models.IntegerField(null=True, verbose_name="操作状态")
+    OPERATORID = models.ForeignKey(
+        "drf_oa_workflow.HRMResource",
+        db_column="OPERATORID",
+        to_field="ID",
+        null=True,
+        on_delete=models.DO_NOTHING,
+        related_name="+",
+        verbose_name="操作人ID",
+    )
+    OPERATEDATE = models.CharField(max_length=200, blank=True, verbose_name="操作日期")
+    OPERATETIME = models.CharField(max_length=200, blank=True, verbose_name="操作时间")
+    OPERATETYPE = models.CharField(
+        max_length=200,
+        blank=True,
+        choices=OAWFOperateType.choices,
+        verbose_name="操作类型",
+    )
+    OPERATENAME = models.CharField(
+        max_length=200, blank=True, verbose_name="操作类型中文名称"
+    )
+    OPERATECODE = models.IntegerField(
+        null=True, choices=OAWFOperateCode.choices, verbose_name="操作类型代码"
+    )
+    ISINVALID = models.CharField(
+        max_length=20, blank=True, verbose_name="是否执行了强制收回"
+    )
+    INVALIDID = models.ForeignKey(
+        "drf_oa_workflow.HRMResource",
+        db_column="INVALIDID",
+        to_field="ID",
+        null=True,
+        on_delete=models.DO_NOTHING,
+        related_name="+",
+        verbose_name="执行强制收回的用户id",
+    )
+    INVALIDDATE = models.CharField(
+        max_length=200, blank=True, verbose_name="强制收回操作日期"
+    )
+    INVALIDTIME = models.CharField(
+        max_length=200, blank=True, verbose_name="强制收回操作时间"
+    )
+
+    class Meta:
+        managed = False
+        db_table = 'ECOLOGY"."WORKFLOW_REQUESTOPERATELOG'
+        verbose_name = verbose_name_plural = "OA流程操作记录日志主表"
+
+    def __str__(self):
+        return self.OPERATENAME

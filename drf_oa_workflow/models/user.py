@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from drf_oa_workflow.choices import OaUserStatus
+
 __all__ = [
     "AbstractOaUserInfo",
     "OaUserInfo",
@@ -25,6 +27,9 @@ class AbstractOaUserInfo(models.Model):
     dept_id = models.IntegerField(null=True, verbose_name="OA用户部门ID")
     dept_name = models.CharField(
         max_length=480, blank=True, default="", verbose_name="OA用户部门"
+    )
+    status = models.IntegerField(
+        choices=OaUserStatus, null=True, verbose_name="OA用户状态"
     )
 
     class Meta:

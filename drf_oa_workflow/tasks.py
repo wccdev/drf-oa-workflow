@@ -27,13 +27,14 @@ def sync_oa_users():
             staff_code_id=i.LOGINID,
             dept_id=i.DEPARTMENTID_id,
             dept_name=i.DEPARTMENTID.DEPARTMENTNAME if i.DEPARTMENTID else "",
+            status=i.STATUS,
         )
         for i in all_oa_users
     ]
     OaUserInfo.objects.bulk_create(
         objs,
         update_conflicts=True,
-        update_fields=["staff_code_id", "dept_id", "name", "dept_name"],
+        update_fields=["staff_code_id", "dept_id", "name", "dept_name", "status"],
         unique_fields=["user_id"],
     )
     return None

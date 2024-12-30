@@ -169,3 +169,18 @@ class OAWFOperateCode(IntegerChoices):
     FORWARD_REPLY = 10, "转发批注"
     TAKE_REPLY = 11, "意见征询回复"
     WITHDRAW = 12, "撤回"
+
+
+class OaUserStatus(IntegerChoices):
+    """
+    OA账号状态
+    """
+
+    ON_TRIAL = 0, "试用"
+    FULL_TIME = 1, "正式"
+    TMP = 2, "临时"
+    TRIAL_DELAY = 3, "试用延期"
+    DISMISS = 4, "解聘"
+    RESIGN = 5, "离职"
+    RETIRE = 6, "退休"
+    INVALID = 7, "无效"

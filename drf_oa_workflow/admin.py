@@ -18,6 +18,7 @@ class OaUserInfoAdmin(admin.ModelAdmin):
         "staff_code_str",
         "dept_id",
         "dept_name",
+        "status",
         "has_system_user",
         "system_user",
     )

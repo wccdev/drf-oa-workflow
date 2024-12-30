@@ -23,6 +23,7 @@ __all__ = [
     "WorkflowNodeLink",
     "WorkflowRequestBase",
     "WorkflowRequestLog",
+    "WorkflowRequestOperateLog",
     "WorkflowType",
 ]
 

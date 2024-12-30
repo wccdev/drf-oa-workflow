@@ -18,10 +18,18 @@ class OaUserInfoAdmin(admin.ModelAdmin):
         "staff_code_str",
         "dept_id",
         "dept_name",
+        "status",
         "has_system_user",
         "system_user",
     )
-    readonly_fields = ("user_id", "name", "staff_code_str", "dept_id", "dept_name")
+    readonly_fields = (
+        "user_id",
+        "name",
+        "staff_code_str",
+        "dept_id",
+        "dept_name",
+        "status",
+    )
     search_fields = ["user_id", "name", "staff_code_str", "dept_name"]
     search_help_text = "查询OA用户ID、名称、工号或者部门"
     list_per_page = 20

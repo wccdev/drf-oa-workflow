@@ -8,6 +8,7 @@ __all__ = [
     "WorkflowNodeLink",
     "WorkflowRequestBase",
     "WorkflowRequestLog",
+    "WorkflowRequestOperateLog",
     "WorkflowType",
     "AbstractOaUserInfo",
     "OaUserInfo",
@@ -22,6 +23,7 @@ from .oa_workflow import WorkflowNodeBase
 from .oa_workflow import WorkflowNodeLink
 from .oa_workflow import WorkflowRequestBase
 from .oa_workflow import WorkflowRequestLog
+from .oa_workflow import WorkflowRequestOperateLog
 from .oa_workflow import WorkflowType
 from .user import AbstractOaUserInfo
 from .user import OaUserInfo

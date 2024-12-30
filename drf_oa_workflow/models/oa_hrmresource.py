@@ -38,6 +38,7 @@ class HRMResource(OADbBaseModel):
         on_delete=models.DO_NOTHING,
         verbose_name="部门ID",
     )
+    STATUS = models.IntegerField(null=True, verbose_name="状态")
 
     def __str__(self):
         return self.LASTNAME

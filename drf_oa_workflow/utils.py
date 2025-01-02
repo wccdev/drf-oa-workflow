@@ -439,12 +439,19 @@ class OaApi:
         }
         return user_info["data"]
 
-    def upload_file(self, oa_category_id: str, file_source: BytesIO, file_name):
+    def upload_file(
+        self,
+        oa_category_id: str,
+        file_source: BytesIO,
+        file_name,
+        return_fileid_only=True,  # noqa: FBT002
+    ):
         """
         上传附件
         :param oa_category_id: Oa附件目录ID
         :param file_source: 上传到Oa的文件内容
         :param file_name: 上传到Oa的文件名称
+        :param return_fileid_only: 只返回上传的附件id
         :return:
         """
         api_path = "/api/doc/upload/uploadFile2Doc"
@@ -454,7 +461,9 @@ class OaApi:
         headers.pop("Content-Type")
         files = {"file": file_source}
         resp = self._post_oa(api_path, post_data=body, headers=headers, files=files)
-        return resp["data"]["fileid"]
+        if return_fileid_only:
+            return resp["data"]["fileid"]
+        return resp["data"]
 
     def get_workflow_chart_url(self, staff_code: str, oa_workflow_id):
         """

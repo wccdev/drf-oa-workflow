@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "drf-oa-workflow"
-version = "0.5.11"
+version = "0.5.12"
 homepage = "https://github.com/wccdev/drf-oa-workflow"
 description = "Skeleton project created by Cookiecutter PyPackage."
 authors = ["Leslie CHan <ampedee@gmail.com>"]

@@ -256,11 +256,12 @@ class OaApi:
             # 错误导致递归的问题
             # print(resp.text)
             # raise SystemError(f"OA: Response[{resp.status_code}]")
-            self.__helpme(f"OA服务异常: Response[{resp.status_code}]")
-            headers[self.TOKEN_KEY] = self.get_token()
-            return self.__request(
-                api_path, rf, headers=headers, need_json=need_json, **kwargs
-            )
+            # self.__helpme(f"OA服务异常: Response[{resp.status_code}]")
+            # headers[self.TOKEN_KEY] = self.get_token()
+            # return self.__request(
+            #     api_path, rf, headers=headers, need_json=need_json, **kwargs
+            # )
+            raise APIException(f"OA服务异常: Response[{resp.status_code}]")
 
         if not need_json:
             return resp.text
@@ -867,23 +868,34 @@ class OaWorkFlow(OaApi):
         # 示例数据 api_example_data.WF_INFO_DATA_DEMO
         return self._get_oa(api_path, params={"requestId": request_id})
 
-    def transmit(self, request_id, trans_type, user_id: str, remark: str = ""):
+    def transmit(  # noqa: PLR0913
+        self,
+        request_id,
+        trans_type,
+        user_id: str,
+        remark: str = "",
+        remind_type: str = "",
+    ):
         """
         转发、意见征询、转办(对外)
         :param request_id:
-        :param trans_type:
+        :param trans_type: 1:转发  2:意见征询 3:转办
         :param user_id:
         :param remark:
+        :param remind_type: 0:短信提醒 2:邮件提醒  ","拼接同时开启短信提醒或者邮件提醒
         :return:
         """
         api_path = "/api/workflow/paService/forwardRequest"
         if trans_type == 3:  # noqa: PLR2004
             if len(user_id.split(",")) > 1:
                 raise APIException(detail="转办只能转给一个用户")
+        other_params = {}
+        if remind_type:
+            other_params["remindTypes"] = remind_type
         post_data = {
-            "forwardFlag": trans_type,  # 1:转发  2:意见征询 3:转办
+            "forwardFlag": trans_type,
             "forwardResourceIds": user_id,
-            "otherParams": {},
+            "otherParams": other_params,
             "remark": remark,
             "requestId": request_id,
         }

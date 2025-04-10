@@ -224,7 +224,8 @@ class OaApi:
                 )
                 if error_detail:
                     re_match = re.match(
-                        r"ESB接口执行失败：批次号\(\w+\)(?P<error_msg>.*)", error_detail
+                        r"ESB接口执行失败：批次号\(\w+\)(?P<error_msg>[\s\S]*)",
+                        error_detail,
                     )
                     if re_match:
                         msg = re_match.groupdict()["error_msg"].strip()

@@ -183,6 +183,8 @@ class WorkflowBase(OADbBaseModel):
     ACTIVEVERSIONID = models.IntegerField(
         verbose_name="当前流程所属活动版本id", null=True
     )
+    DSPORDER = models.IntegerField(verbose_name="顺序", null=True)
+    WFIDENTKEY = models.IntegerField(verbose_name="流程ID标识", null=True)
 
     def into_srm_dict(self):
         """

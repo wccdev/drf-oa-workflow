@@ -186,28 +186,6 @@ class WorkflowBase(OADbBaseModel):
     DSPORDER = models.IntegerField(verbose_name="顺序", null=True)
     WFIDENTKEY = models.IntegerField(verbose_name="流程ID标识", null=True)
 
-    def into_srm_dict(self):
-        """
-        CASE
-            WHEN VERSION IS NULL THEN NULL
-            ELSE TEMPLATEID
-        END AS parent_id,
-        CASE
-            WHEN VERSION IS NULL THEN 1
-            ELSE VERSION
-        END AS work_flow_version
-        """
-        return {
-            "work_flow_id": self.ID,
-            "name": self.WORKFLOWNAME,
-            "work_flow_type_id": self.WORKFLOWTYPE_id,
-            "work_flow_form_id": self.FORMID,
-            "is_active_version": self.ISVALID,
-            "parent_id": self.TEMPLATEID if self.VERSION else None,
-            "work_flow_version": self.VERSION or 1,
-            "active_version_id": self.ACTIVEVERSIONID,
-        }
-
     class Meta:
         managed = False
         db_table = 'ECOLOGY"."WORKFLOW_BASE'
@@ -297,18 +275,6 @@ class WorkflowFlowNode(OADbBaseModel):
         db_table = 'ECOLOGY"."WORKFLOW_FLOWNODE'
         verbose_name = verbose_name_plural = "OA流程下的节点"
 
-    def into_srm_dict(self):
-        return {
-            "work_flow_id": self.WORKFLOWID_id,
-            "node_order": self.NODEORDER,
-            "node_id": self.NODEID_id,
-            "node_name": self.NODEID.NODENAME,
-            "is_start": self.NODEID.ISSTART,
-            "is_reject": self.NODEID.ISREJECT,
-            "is_reopen": self.NODEID.ISREOPEN,
-            "is_end": self.NODEID.ISEND,
-        }
-
 
 class WorkflowNodeLink(OADbBaseModel):
     """
@@ -348,15 +314,6 @@ class WorkflowNodeLink(OADbBaseModel):
         managed = False
         db_table = 'ECOLOGY"."WORKFLOW_NODELINK'
         verbose_name = verbose_name_plural = "OA流程节点出口"
-
-    def into_srm_dict(self):
-        return {
-            "from_node_id": self.NODEID_id,
-            "from_node_name": self.NODEID.NODENAME,
-            "to_node_id": self.DESTNODEID_id,
-            "to_node_name": self.DESTNODEID.NODENAME,
-            "link_name": self.LINKNAME,
-        }
 
 
 class WorkflowRequestLog(OADbBaseModel):
